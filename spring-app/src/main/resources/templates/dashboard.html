@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel treningowy · Trener AI </title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/mobile-nav.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a>
+    <nav class="nav-links"><a class="nav-link active" href="/">Panel</a><a class="nav-link" href="/settings">Ustawienia</a><form th:action="@{/logout}" method="post"><button class="logout" type="submit">Wyloguj</button></form></nav>
+  </header>
+
+  <main class="app-layout">
+    <section class="hero">
+      <div><p class="eyebrow">PANEL TRENINGOWY</p><h1 th:text="|Cześć, ${user.email}|">Cześć</h1><p>Wybierz aktywności, ustaw początek planu, a AI przygotuje trzy treningi gotowe do Zwift lub TrainingPeaks.</p></div>
+      <div class="hero-actions"><a class="button button-strava" href="/strava/connect"><svg class="strava-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M10.463 8.238l2.836 5.59h4.172L10.463 0 3.455 13.828h4.172z"/></svg><span>Połącz ze Stravą</span></a><form th:action="@{/strava/sync}" method="post"><button class="button button-muted" type="submit">Odśwież aktywności</button></form></div>
+    </section>
+
+    <div class="alert alert-success" th:if="${message}"><span>✓</span><p th:text="${message}"></p></div>
+    <div class="alert alert-error" th:if="${error}"><span>!</span><p th:text="${error}"></p></div>
+
+    <div class="dashboard-grid">
+    <form th:action="@{/workouts/generate}" method="post" class="card generator-card">
+      <div class="card-heading">
+        <div><p class="eyebrow">KROK 1</p><h2>Wybierz aktywności do analizy</h2><p>AI uwzględni obciążenie i charakter zaznaczonych jazd.</p></div>
+        <label class="date-field"><span>Start planu</span><input type="date" name="startDate" th:value="${defaultStartDate}" required></label>
+      </div>
+      <div class="activity-list" th:if="${!#lists.isEmpty(activities)}">
+        <label class="activity-row" th:each="item : ${activities}">
+          <input type="checkbox" name="activityIds" th:value="${item.id}" th:checked="${!item.analyzed}">
+          <span class="custom-check"></span>
+          <span class="activity-title"><strong th:text="${item.name}">Jazda</strong><small th:text="|${item.activityDate} · ${item.activityType}|">Data · typ</small></span>
+          <span class="metric"><strong th:text="${#numbers.formatDecimal(item.distanceKm, 1, 2)}">0,00</strong><small>km</small></span>
+          <span class="metric"><strong th:text="${item.movingTimeMin}">0</strong><small>min</small></span>
+          <span class="metric elevation"><strong th:text="|+${item.elevationGainM}|">+0</strong><small>m</small></span>
+          <span class="status" th:classappend="${item.analyzed ? ' status-muted' : ' status-new'}" th:text="${item.analyzed ? 'analizowany' : 'nowy'}">nowy</span>
+        </label>
+      </div>
+      <div class="empty-inline" th:if="${#lists.isEmpty(activities)}"><span>↗</span><div><strong>Brak aktywności</strong><p>Połącz konto Strava, a następnie pobierz ostatnie jazdy.</p></div></div>
+      <div class="generator-footer"><p>Powstaną trzy pliki ZWO z planowanymi datami treningów.</p><button class="button button-generate" type="submit" th:disabled="${#lists.isEmpty(activities)}">Generuj 3 treningi ZWO <span>✦</span></button></div>
+    </form>
+
+    <section class="card workouts-card" th:if="${!#maps.isEmpty(workoutBlocks)}">
+      <div class="card-heading compact"><div><p class="eyebrow">ARCHIWUM</p><h2>Wygenerowane treningi</h2><p>Plany pogrupowane według daty i godziny wygenerowania.</p></div></div>
+      <details class="workout-block" th:each="block, blockStatus : ${workoutBlocks}" th:attr="open=${blockStatus.first} ? 'open' : null">
+        <summary><span class="calendar-dot">◷</span><span th:text="|Wygenerowano: ${#temporals.format(block.key, 'dd.MM.yyyy HH:mm')}|">Wygenerowano</span><span class="accordion-chevron" aria-hidden="true"></span></summary>
+        <div class="workout-row" th:each="workout : ${block.value}">
+          <div class="workout-name"><strong th:text="${workout.name}">Trening</strong><small th:text="|Planowany termin: ${workout.plannedDate}|">Planowany termin</small></div>
+          <div class="workout-actions"><a class="download-link" th:href="@{/workouts/{id}/download(id=${workout.id})}">Pobierz .zwo</a><form th:action="@{/workouts/{id}/delete(id=${workout.id})}" method="post"><button class="delete-button" type="submit">Usuń z listy</button></form></div>
+        </div>
+      </details>
+    </section>
+    </div>
+  </main>
+</body>
+</html>

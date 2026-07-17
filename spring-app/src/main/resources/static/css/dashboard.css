@@ -1,0 +1,153 @@
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(330px, 0.9fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.dashboard-grid .workouts-card {
+  margin-top: 0;
+}
+
+.button-strava {
+  background: #fc4c02;
+  color: #fff;
+}
+
+.button-strava:hover {
+  background: #e34402;
+}
+
+.strava-logo {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: currentColor;
+}
+
+.dashboard-grid .generator-card:only-child {
+  grid-column: 1 / -1;
+}
+
+.dashboard-grid .activity-row {
+  grid-template-columns: 20px minmax(120px, 1fr) 62px 58px 70px 74px;
+  gap: 9px;
+}
+
+.dashboard-grid .card-heading,
+.dashboard-grid .generator-footer {
+  padding-right: 24px;
+  padding-left: 24px;
+}
+
+.dashboard-grid .workout-block {
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.dashboard-grid .workout-block summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: #eaf5f1;
+  color: #176951;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.dashboard-grid .workout-block summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-grid .accordion-chevron {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.dashboard-grid .workout-block[open] .accordion-chevron {
+  transform: rotate(225deg);
+}
+
+.dashboard-grid .workout-row {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.dashboard-grid .workout-actions {
+  width: 100%;
+  justify-content: space-between;
+}
+
+@media (max-width: 1050px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid .activity-row {
+    grid-template-columns: 20px minmax(180px, 1fr) 64px 64px 78px 82px;
+    gap: 13px;
+  }
+
+  .dashboard-grid .workout-row {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .dashboard-grid .workout-actions {
+    width: auto;
+  }
+}
+
+@media (max-width: 800px) {
+  .dashboard-grid .activity-row {
+    grid-template-columns: 20px repeat(3, minmax(0, 1fr));
+    row-gap: 10px;
+  }
+
+  .dashboard-grid .activity-row .custom-check {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    align-self: start;
+    margin-top: 2px;
+  }
+
+  .dashboard-grid .activity-row .activity-title {
+    grid-column: 2 / -1;
+  }
+
+  .dashboard-grid .activity-row .metric,
+  .dashboard-grid .activity-row .elevation {
+    display: block;
+    text-align: left;
+  }
+
+  .dashboard-grid .activity-row .status {
+    display: block;
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .dashboard-grid .workout-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-grid .workout-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 530px) {
+  .dashboard-grid .activity-row .metric:nth-of-type(5) {
+    display: block;
+  }
+}
