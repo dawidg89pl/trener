@@ -1,0 +1,13 @@
+@media (max-width: 530px) {
+  .nav-links {
+    gap: 14px;
+  }
+
+  .nav-link {
+    display: inline;
+  }
+
+  .nav-link.active {
+    display: none;
+  }
+}

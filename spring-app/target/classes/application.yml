@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: trener-ai
+  datasource:
+    # Uzupełnij ręcznie danymi swojej bazy PostgreSQL.
+    url: ${DB_URL:jdbc:postgresql://ep-orange-hill-za1ivik4-pooler.c-2.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require/trener_ai}
+    username: neondb_owner
+    password: npg_B1eiXIQmNk4j
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  thymeleaf:
+    cache: false
+server:
+  #port: ${PORT:8080}
+  port: ${PORT:20190}
+app:
+  # Lokalnie zostaw localhost. Na VPS ustaw np. https://trener.twojadomena.pl
+  # Ten adres musi odpowiadać domenie wpisanej w Strava: Settings > My API Application.
+  #public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+  $public-url: ${APP_PUBLIC_URL:http://amy190.mikrus.xyz:20190}
+  crypto-key: ${APP_CRYPTO_KEY:change-this-to-a-long-random-secret-at-least-32-characters}
