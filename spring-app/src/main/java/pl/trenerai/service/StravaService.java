@@ -32,17 +32,20 @@ public class StravaService {
     private final StravaTokenRepository tokens;
     private final ActivityRepository activities;
     private final SecretCrypto crypto;
+    private final UserEventService eventLog;
     private final ObjectMapper json = new ObjectMapper();
     private final HttpClient http = HttpClient.newHttpClient();
     private final String publicUrl;
 
     public StravaService(CurrentUserService c, UserSettingsRepository s, StravaTokenRepository t,
-            ActivityRepository a, SecretCrypto crypto, @Value("${app.public-url}") String url) {
+            ActivityRepository a, SecretCrypto crypto, UserEventService eventLog,
+            @Value("${app.public-url}") String url) {
         current = c;
         settings = s;
         tokens = t;
         activities = a;
         this.crypto = crypto;
+        this.eventLog = eventLog;
         publicUrl = url.replaceAll("/$", "");
     }
 
@@ -69,6 +72,7 @@ public class StravaService {
                 "code", code,
                 "grant_type", "authorization_code"));
         saveToken(user, data);
+        eventLog.record(user, "STRAVA_CONNECTED", "Połączono konto ze Stravą");
     }
 
     @Transactional
@@ -109,6 +113,8 @@ public class StravaService {
             if (activity.getAverageHeartRate() != null || activity.getMaxHeartRate() != null) withHeartRate++;
             if (activity.getAverageCadence() != null) withCadence++;
         }
+        eventLog.record(user, "STRAVA_SYNC", "Zsynchronizowano ze Stravą "
+                + summaries.size() + " aktywności");
         return new SyncResult(summaries.size(), detailed, withPower, withHeartRate, withCadence);
     }
 

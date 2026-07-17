@@ -21,9 +21,9 @@ import pl.trenerai.repository.*;
 
 @Service
 public class WorkoutGenerationService {
-    private final CurrentUserService current; private final UserSettingsRepository settings; private final ActivityRepository activities; private final GeneratedWorkoutRepository workouts; private final SecretCrypto crypto;
+    private final CurrentUserService current; private final UserSettingsRepository settings; private final ActivityRepository activities; private final GeneratedWorkoutRepository workouts; private final SecretCrypto crypto; private final UserEventService eventLog;
     private final ObjectMapper json = new ObjectMapper(); private final HttpClient http = HttpClient.newHttpClient();
-    public WorkoutGenerationService(CurrentUserService current, UserSettingsRepository settings, ActivityRepository activities, GeneratedWorkoutRepository workouts, SecretCrypto crypto) { this.current=current;this.settings=settings;this.activities=activities;this.workouts=workouts;this.crypto=crypto; }
+    public WorkoutGenerationService(CurrentUserService current, UserSettingsRepository settings, ActivityRepository activities, GeneratedWorkoutRepository workouts, SecretCrypto crypto, UserEventService eventLog) { this.current=current;this.settings=settings;this.activities=activities;this.workouts=workouts;this.crypto=crypto;this.eventLog=eventLog; }
 
     @Transactional
     public int generate(List<Long> activityIds, LocalDate startDate) throws Exception {
@@ -36,6 +36,7 @@ public class WorkoutGenerationService {
         if(!list.isArray()||list.isEmpty()) throw new IllegalStateException("OpenAI nie zwróciło treningów w wymaganym formacie.");
         int count=0; for(JsonNode workout:list){ if(count==3) break; LocalDate date=startDate.plusDays(count*2L); String name=workout.path("name").asText("Trening "+(count+1)); workouts.save(new GeneratedWorkout(user,name,date,toZwo(workout,date))); count++; }
         for(Activity activity:selected) activity.setAnalyzed(true);
+        eventLog.record(user, "WORKOUTS_GENERATED", "Wygenerowano " + count + " treningi");
         return count;
     }
 

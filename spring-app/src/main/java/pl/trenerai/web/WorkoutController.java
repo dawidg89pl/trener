@@ -16,12 +16,14 @@ public class WorkoutController {
     private final WorkoutGenerationService generator;
     private final CurrentUserService current;
     private final GeneratedWorkoutRepository workouts;
+    private final UserEventService eventLog;
 
     public WorkoutController(WorkoutGenerationService generator, CurrentUserService current,
-            GeneratedWorkoutRepository workouts) {
+            GeneratedWorkoutRepository workouts, UserEventService eventLog) {
         this.generator = generator;
         this.current = current;
         this.workouts = workouts;
+        this.eventLog = eventLog;
     }
 
     @PostMapping("/workouts/generate")
@@ -57,6 +59,7 @@ public class WorkoutController {
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         workout.markDeleted();
         workouts.save(workout);
+        eventLog.record(current.get(), "WORKOUT_DELETED", "Usunięto trening „" + workout.getName() + "”");
         redirect.addFlashAttribute("message", "Trening został usunięty z listy.");
         return "redirect:/";
     }

@@ -9,6 +9,81 @@
   margin-top: 0;
 }
 
+.recent-events-card {
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.recent-events-card .card-heading {
+  border-bottom: 1px solid var(--line);
+}
+
+.event-timeline {
+  margin: 0;
+  padding: 8px 28px 18px;
+  list-style: none;
+}
+
+.event-item {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding: 15px 0;
+}
+
+.event-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 31px;
+  bottom: -15px;
+  left: 6px;
+  width: 1px;
+  background: var(--line);
+}
+
+.event-dot {
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  margin-top: 3px;
+  flex: 0 0 13px;
+  border: 3px solid #c8e8e1;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.event-strava_connected .event-dot,
+.event-strava_sync .event-dot {
+  border-color: #ffd8c7;
+  background: #fc4c02;
+}
+
+.event-workout_deleted .event-dot {
+  border-color: #f1d5d5;
+  background: var(--danger);
+}
+
+.event-content strong,
+.event-content time {
+  display: block;
+}
+
+.event-content strong {
+  font-size: 13px;
+}
+
+.event-content time {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.empty-events {
+  padding: 24px 28px 28px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .button-strava {
   background: #fc4c02;
   color: #fff;
