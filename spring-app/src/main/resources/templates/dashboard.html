@@ -55,6 +55,20 @@
       </details>
     </section>
     </div>
+
+    <section class="card recent-events-card">
+      <div class="card-heading compact"><div><p class="eyebrow">OSTATNIA AKTYWNOŚĆ</p><h2>Co ostatnio się działo</h2><p>Najnowsze operacje wykonane na Twoim koncie.</p></div></div>
+      <ol class="event-timeline" th:if="${!#lists.isEmpty(recentEvents)}">
+        <li class="event-item" th:each="event : ${recentEvents}" th:classappend="| event-${event.type.toLowerCase()}|">
+          <span class="event-dot" aria-hidden="true"></span>
+          <div class="event-content">
+            <strong th:text="${event.description}">Zsynchronizowano ze Stravą</strong>
+            <time th:datetime="${event.createdAt}" th:text="${#temporals.format(event.createdAtLocal, 'dd.MM.yyyy, HH:mm')}">17.07.2026, 14:30</time>
+          </div>
+        </li>
+      </ol>
+      <div class="empty-events" th:if="${#lists.isEmpty(recentEvents)}">Tutaj pojawią się informacje o synchronizacji i wygenerowanych treningach.</div>
+    </section>
   </main>
 </body>
 </html>

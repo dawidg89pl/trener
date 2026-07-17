@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import pl.trenerai.model.GeneratedWorkout;
 import pl.trenerai.repository.ActivityRepository;
 import pl.trenerai.repository.GeneratedWorkoutRepository;
+import pl.trenerai.repository.UserEventRepository;
 import pl.trenerai.service.CurrentUserService;
 
 @Controller
@@ -19,14 +20,17 @@ public class DashboardController {
     private final CurrentUserService current;
     private final ActivityRepository activities;
     private final GeneratedWorkoutRepository workouts;
+    private final UserEventRepository events;
 
     public DashboardController(
             CurrentUserService current,
             ActivityRepository activities,
-            GeneratedWorkoutRepository workouts) {
+            GeneratedWorkoutRepository workouts,
+            UserEventRepository events) {
         this.current = current;
         this.activities = activities;
         this.workouts = workouts;
+        this.events = events;
     }
 
     @GetMapping("/")
@@ -48,6 +52,7 @@ public class DashboardController {
         model.addAttribute("user", user);
         model.addAttribute("activities", activities.findByUserIdOrderByActivityDateDesc(user.getId()));
         model.addAttribute("workoutBlocks", workoutBlocks);
+        model.addAttribute("recentEvents", events.findTop10ByUserIdOrderByCreatedAtDesc(user.getId()));
         model.addAttribute("defaultStartDate", LocalDate.now().plusDays(1));
         return "dashboard";
     }
