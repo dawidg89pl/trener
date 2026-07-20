@@ -11,34 +11,57 @@
 <body>
   <header class="topbar">
     <a class="brand" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a>
-    <nav class="nav-links"><a class="nav-link active" href="/">Panel</a><a class="nav-link" href="/settings">Ustawienia</a><form th:action="@{/logout}" method="post"><button class="logout" type="submit">Wyloguj</button></form></nav>
+    <nav class="nav-links"><a class="nav-link active" href="/">Panel</a><a class="nav-link" href="/settings">Ustawienia</a><a class="nav-link" href="/faq">FAQ</a><form th:action="@{/logout}" method="post"><button class="logout" type="submit">Wyloguj</button></form></nav>
   </header>
 
   <main class="app-layout">
     <section class="hero">
       <div><p class="eyebrow">PANEL TRENINGOWY</p><h1 th:text="|Cześć, ${user.email}|">Cześć</h1><p>Wybierz aktywności, ustaw początek planu, a AI przygotuje trzy treningi gotowe do Zwift lub TrainingPeaks.</p></div>
-      <div class="hero-actions"><a class="button button-strava" href="/strava/connect"><svg class="strava-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M10.463 8.238l2.836 5.59h4.172L10.463 0 3.455 13.828h4.172z"/></svg><span>Połącz ze Stravą</span></a><form th:action="@{/strava/sync}" method="post"><button class="button button-muted" type="submit">Odśwież aktywności</button></form></div>
+      <div class="hero-actions"><a class="button button-strava" href="/strava/connect"><svg class="strava-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M10.463 8.238l2.836 5.59h4.172L10.463 0 3.455 13.828h4.172z"/></svg><span>Połącz ze Stravą</span></a><form th:action="@{/strava/sync}" method="post" data-loading-message="Pobieramy aktywności ze Stravy…"><button class="button button-muted" type="submit">Odśwież aktywności</button></form></div>
     </section>
 
     <div class="alert alert-success" th:if="${message}"><span>✓</span><p th:text="${message}"></p></div>
     <div class="alert alert-error" th:if="${error}"><span>!</span><p th:text="${error}"></p></div>
 
     <div class="dashboard-grid">
-    <form th:action="@{/workouts/generate}" method="post" class="card generator-card">
+    <form th:action="@{/workouts/generate}" method="post" class="card generator-card" data-loading-message="AI przygotowuje Twoje treningi…">
       <div class="card-heading">
         <div><p class="eyebrow">KROK 1</p><h2>Wybierz aktywności do analizy</h2><p>AI uwzględni obciążenie i charakter zaznaczonych jazd.</p></div>
         <label class="date-field"><span>Start planu</span><input type="date" name="startDate" th:value="${defaultStartDate}" required></label>
       </div>
+      <div class="weekly-summary-heading"><span>OSTATNIE 7 DNI</span></div>
+      <section class="weekly-summary" aria-label="Podsumowanie ostatnich 7 dni">
+        <div><span>Treningi</span><strong th:text="${weeklySummary.count}">0</strong></div>
+        <div><span>Dystans</span><strong th:text="|${#numbers.formatDecimal(weeklySummary.distanceKm, 1, 1)} km|">0 km</strong></div>
+        <div><span>Czas</span><strong th:text="${weeklySummary.duration}">0 h 0 min</strong></div>
+        <div><span>Przewyższenie</span><strong th:text="|${#numbers.formatDecimal(weeklySummary.elevationM, 1, 0)} m|">0 m</strong></div>
+      </section>
       <div class="activity-list" th:if="${!#lists.isEmpty(activities)}">
-        <label class="activity-row" th:each="item : ${activities}">
-          <input type="checkbox" name="activityIds" th:value="${item.id}" th:checked="${!item.analyzed}">
-          <span class="custom-check"></span>
-          <span class="activity-title"><strong th:text="${item.name}">Jazda</strong><small th:text="|${item.activityDate} · ${item.activityType}|">Data · typ</small></span>
-          <span class="metric"><strong th:text="${#numbers.formatDecimal(item.distanceKm, 1, 2)}">0,00</strong><small>km</small></span>
-          <span class="metric"><strong th:text="${item.movingTimeMin}">0</strong><small>min</small></span>
-          <span class="metric elevation"><strong th:text="|+${item.elevationGainM}|">+0</strong><small>m</small></span>
-          <span class="status" th:classappend="${item.analyzed ? ' status-muted' : ' status-new'}" th:text="${item.analyzed ? 'analizowany' : 'nowy'}">nowy</span>
-        </label>
+        <div class="activity-select-all">
+          <label><input type="checkbox" id="select-all-activities"><span>Zaznacz wszystko</span></label>
+        </div>
+        <div class="activity-item" th:each="item : ${activities}">
+          <div class="activity-row">
+            <input type="checkbox" name="activityIds" th:id="|activity-${item.id}|" th:value="${item.id}" th:checked="${!item.analyzed}">
+            <label class="custom-check" th:for="|activity-${item.id}|" aria-label="Wybierz aktywność"></label>
+            <label class="activity-title" th:for="|activity-${item.id}|"><strong th:text="${item.name}">Jazda</strong><small th:text="|${item.activityDate} · ${item.activityType}|">Data · typ</small></label>
+            <span class="metric"><strong th:text="${#numbers.formatDecimal(item.distanceKm, 1, 2)}">0,00</strong><small>km</small></span>
+            <span class="metric"><strong th:text="${item.movingTimeMin}">0</strong><small>min</small></span>
+            <span class="metric elevation"><strong th:text="|+${item.elevationGainM}|">+0</strong><small>m</small></span>
+            <span class="status" th:classappend="${item.analyzed ? ' status-muted' : ' status-new'}" th:text="${item.analyzed ? 'analizowany' : 'nowy'}">nowy</span>
+          </div>
+          <details class="activity-details">
+            <summary><span>Szczegóły pomiarów</span><span class="activity-details-chevron" aria-hidden="true"></span></summary>
+            <div class="activity-detail-grid">
+              <div><span>Śr. moc</span><strong th:text="${item.averageWatts != null ? #numbers.formatDecimal(item.averageWatts, 1, 0) + ' W' : 'Brak danych'}">Brak danych</strong></div>
+              <div><span>Moc ważona</span><strong th:text="${item.weightedAverageWatts != null ? #numbers.formatDecimal(item.weightedAverageWatts, 1, 0) + ' W' : 'Brak danych'}">Brak danych</strong></div>
+              <div><span>Śr. tętno</span><strong th:text="${item.averageHeartRate != null ? #numbers.formatDecimal(item.averageHeartRate, 1, 0) + ' bpm' : 'Brak danych'}">Brak danych</strong></div>
+              <div><span>Maks. tętno</span><strong th:text="${item.maxHeartRate != null ? #numbers.formatDecimal(item.maxHeartRate, 1, 0) + ' bpm' : 'Brak danych'}">Brak danych</strong></div>
+              <div><span>Śr. kadencja</span><strong th:text="${item.averageCadence != null ? #numbers.formatDecimal(item.averageCadence, 1, 0) + ' rpm' : 'Brak danych'}">Brak danych</strong></div>
+              <div><span>Śr. prędkość</span><strong th:text="${item.averageSpeedKph != null ? #numbers.formatDecimal(item.averageSpeedKph, 1, 1) + ' km/h' : 'Brak danych'}">Brak danych</strong></div>
+            </div>
+          </details>
+        </div>
       </div>
       <div class="empty-inline" th:if="${#lists.isEmpty(activities)}"><span>↗</span><div><strong>Brak aktywności</strong><p>Połącz konto Strava, a następnie pobierz ostatnie jazdy.</p></div></div>
       <div class="generator-footer"><p>Powstaną trzy pliki ZWO z planowanymi datami treningów.</p><button class="button button-generate" type="submit" th:disabled="${#lists.isEmpty(activities)}">Generuj 3 treningi ZWO <span>✦</span></button></div>
@@ -59,7 +82,7 @@
     <section class="card recent-events-card">
       <div class="card-heading compact"><div><p class="eyebrow">OSTATNIA AKTYWNOŚĆ</p><h2>Co ostatnio się działo</h2><p>Najnowsze operacje wykonane na Twoim koncie.</p></div></div>
       <ol class="event-timeline" th:if="${!#lists.isEmpty(recentEvents)}">
-        <li class="event-item" th:each="event : ${recentEvents}" th:classappend="| event-${event.type.toLowerCase()}|">
+        <li class="event-item" th:each="event, eventStatus : ${recentEvents}" th:if="${eventStatus.index < 5}" th:classappend="| event-${event.type.toLowerCase()}|">
           <span class="event-dot" aria-hidden="true"></span>
           <div class="event-content">
             <strong th:text="${event.description}">Zsynchronizowano ze Stravą</strong>
@@ -67,8 +90,37 @@
           </div>
         </li>
       </ol>
+      <details class="events-more" th:if="${#lists.size(recentEvents) > 5}">
+        <summary><span>Pokaż starsze aktywności</span><span class="events-more-chevron" aria-hidden="true"></span></summary>
+        <ol class="event-timeline event-timeline-older">
+          <li class="event-item" th:each="event, eventStatus : ${recentEvents}" th:if="${eventStatus.index >= 5}" th:classappend="| event-${event.type.toLowerCase()}|">
+            <span class="event-dot" aria-hidden="true"></span>
+            <div class="event-content">
+              <strong th:text="${event.description}">Zsynchronizowano ze Stravą</strong>
+              <time th:datetime="${event.createdAt}" th:text="${#temporals.format(event.createdAtLocal, 'dd.MM.yyyy, HH:mm')}">17.07.2026, 14:30</time>
+            </div>
+          </li>
+        </ol>
+      </details>
       <div class="empty-events" th:if="${#lists.isEmpty(recentEvents)}">Tutaj pojawią się informacje o synchronizacji i wygenerowanych treningach.</div>
     </section>
   </main>
+  <div th:replace="~{fragments/footer :: footer}"></div>
+  <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+    <div class="loading-panel">
+      <svg class="loading-wheel" viewBox="0 0 140 140" aria-hidden="true">
+        <g class="loading-wheel-spinner">
+          <circle class="loading-wheel-tire" cx="70" cy="70" r="55"/>
+          <path class="loading-wheel-spokes" d="M70 17v106M17 70h106M32.5 32.5l75 75M32.5 107.5l75-75"/>
+          <circle class="loading-wheel-hub" cx="70" cy="70" r="7"/>
+        </g>
+      </svg>
+      <p class="loading-title" id="loading-message">Trwa przetwarzanie…</p>
+      <p class="loading-hint">To może potrwać chwilę. Nie zamykaj tej strony.</p>
+      <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+  </div>
+  <script src="/js/loading-overlay.js" defer></script>
+  <script src="/js/activity-select-all.js" defer></script>
 </body>
 </html>

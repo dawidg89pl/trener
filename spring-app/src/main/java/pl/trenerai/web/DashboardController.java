@@ -36,6 +36,17 @@ public class DashboardController {
     @GetMapping("/")
     String dashboard(Model model) {
         var user = current.get();
+        var activityList = activities.findByUserIdOrderByActivityDateDesc(user.getId());
+        var weekStart = LocalDate.now().minusDays(6);
+        var weeklyActivities = activityList.stream()
+                .filter(activity -> !activity.getActivityDate().isBefore(weekStart))
+                .toList();
+        int weeklyMinutes = weeklyActivities.stream().mapToInt(activity -> activity.getMovingTimeMin()).sum();
+        var weeklySummary = new WeeklySummary(
+                weeklyActivities.size(),
+                weeklyActivities.stream().mapToDouble(activity -> activity.getDistanceKm()).sum(),
+                weeklyMinutes / 60 + " h " + weeklyMinutes % 60 + " min",
+                weeklyActivities.stream().mapToDouble(activity -> activity.getElevationGainM()).sum());
         var workoutBlocks = workouts.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -50,10 +61,13 @@ public class DashboardController {
                         })));
 
         model.addAttribute("user", user);
-        model.addAttribute("activities", activities.findByUserIdOrderByActivityDateDesc(user.getId()));
+        model.addAttribute("activities", activityList);
+        model.addAttribute("weeklySummary", weeklySummary);
         model.addAttribute("workoutBlocks", workoutBlocks);
-        model.addAttribute("recentEvents", events.findTop10ByUserIdOrderByCreatedAtDesc(user.getId()));
+        model.addAttribute("recentEvents", events.findByUserIdOrderByCreatedAtDesc(user.getId()));
         model.addAttribute("defaultStartDate", LocalDate.now().plusDays(1));
         return "dashboard";
     }
+
+    public record WeeklySummary(int count, double distanceKm, String duration, double elevationM) {}
 }

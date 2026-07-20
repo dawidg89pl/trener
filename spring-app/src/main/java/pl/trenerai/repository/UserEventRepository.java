@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import pl.trenerai.model.UserEvent;
 
 public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
-    List<UserEvent> findTop10ByUserIdOrderByCreatedAtDesc(Long userId);
+    List<UserEvent> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

@@ -19,5 +19,5 @@ app:
   # Lokalnie zostaw localhost. Na VPS ustaw np. https://trener.twojadomena.pl
   # Ten adres musi odpowiadać domenie wpisanej w Strava: Settings > My API Application.
   #public-url: ${APP_PUBLIC_URL:http://localhost:8080}
-  $public-url: ${APP_PUBLIC_URL:http://amy190.mikrus.xyz:20190}
+  public-url: ${APP_PUBLIC_URL:http://amy190.mikrus.xyz:20190}
   crypto-key: ${APP_CRYPTO_KEY:change-this-to-a-long-random-secret-at-least-32-characters}
