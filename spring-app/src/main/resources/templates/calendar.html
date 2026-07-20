@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kalendarz treningów · Trener AI</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/calendar.css">
+  <link rel="stylesheet" href="/css/readability.css">
+  <link rel="stylesheet" href="/css/mobile-nav.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <script src="/js/theme.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a>
+  <nav class="nav-links"><a class="nav-link" href="/">Panel</a><a class="nav-link active" href="/calendar">Kalendarz</a><a class="nav-link" href="/settings">Ustawienia</a><a class="nav-link" href="/faq">FAQ</a><button class="theme-toggle" type="button" data-theme-toggle><span class="theme-icon-sun">☀</span><span class="theme-icon-moon">☾</span></button><form th:action="@{/logout}" method="post"><button class="logout" type="submit">Wyloguj</button></form></nav>
+</header>
+
+<main class="calendar-layout">
+  <section class="calendar-hero">
+    <div><p class="eyebrow">PLAN TRENINGOWY</p><h1>Kalendarz treningów</h1><p>Każdy wygenerowany trening znajduje się w kafelku odpowiadającym planowanej dacie wykonania.</p></div>
+    <a class="button button-muted" href="/">← Wróć do analizy</a>
+  </section>
+
+  <section class="card calendar-card">
+    <header class="calendar-header">
+      <a class="month-button" th:href="@{/calendar(month=${previousMonth})}" aria-label="Poprzedni miesiąc">←</a>
+      <h2 th:text="${monthLabel}">Lipiec 2026</h2>
+      <a class="month-button" th:href="@{/calendar(month=${nextMonth})}" aria-label="Następny miesiąc">→</a>
+    </header>
+    <div class="calendar-scroll">
+      <div class="calendar-weekdays" aria-hidden="true"><span>Pon</span><span>Wt</span><span>Śr</span><span>Czw</span><span>Pt</span><span>Sob</span><span>Nie</span></div>
+      <div class="calendar-grid">
+        <article class="calendar-day" th:each="day : ${days}" th:classappend="|${day.currentMonth ? '' : ' is-outside'}${day.today ? ' is-today' : ''}|">
+          <header class="calendar-day-heading"><time th:datetime="${day.date}" th:text="${day.date.dayOfMonth}">1</time><span th:if="${day.today}">dzisiaj</span></header>
+          <div class="day-workouts">
+            <th:block th:each="workout : ${day.workouts}">
+              <div class="calendar-workout">
+                <span class="workout-marker" aria-hidden="true"></span>
+                <span class="calendar-workout-title"><strong th:text="${workout.name}">Trening</strong><small th:text="${workoutSummaries[workout.id].duration}">60 min</small></span>
+                <button class="workout-info-button" type="button" th:attr="data-dialog-target=|workout-dialog-${workout.id}|,aria-label=|Pokaż szczegóły treningu ${workout.name}|">i</button>
+              </div>
+              <dialog class="workout-dialog" th:id="|workout-dialog-${workout.id}|" th:attr="aria-labelledby=|workout-dialog-title-${workout.id}|">
+                <div class="workout-dialog-panel">
+                  <header><div><span th:text="|${workout.plannedDate} · ${workoutSummaries[workout.id].duration}|">Data · czas</span><h2 th:id="|workout-dialog-title-${workout.id}|" th:text="${workout.name}">Trening</h2></div><button class="dialog-close" type="button" data-dialog-close aria-label="Zamknij">×</button></header>
+                  <div class="workout-dialog-body">
+                    <p class="dialog-description" th:text="${workoutSummaries[workout.id].description}">Opis treningu</p>
+                    <section class="workout-profile-section" th:if="${!#lists.isEmpty(workoutSummaries[workout.id].steps)}">
+                      <strong class="profile-title">Przebieg treningu</strong>
+                      <div class="workout-profile-chart" role="img" th:attr="aria-label=|Profil mocy treningu ${workout.name}|"><span class="profile-segment" th:each="step : ${workoutSummaries[workout.id].steps}" th:style="|width:${step.widthPercentage}%;--profile-start:${step.startHeight}%;--profile-end:${step.endHeight}%|" th:title="|${step.label}: ${step.duration}, ${step.power}|"></span></div>
+                      <ol class="workout-step-list"><li th:each="step, stepStatus : ${workoutSummaries[workout.id].steps}"><span class="step-number" th:text="${stepStatus.count}">1</span><div><strong th:text="${step.label}">Rozgrzewka</strong><p th:text="|${step.duration} · ${step.power}|">10 min · 40–60% FTP</p><small th:text="${step.cadence}">90 rpm</small></div></li></ol>
+                    </section>
+                    <strong class="zones-title">Czas w strefach mocy</strong>
+                    <div class="calendar-zones"><div class="calendar-zone" th:each="zone : ${workoutSummaries[workout.id].zones}" th:if="${zone.percentage > 0}"><span th:text="|Z${zone.number}|">Z1</span><div><i th:classappend="| zone-${zone.number}|" th:style="|width:${zone.percentage}%|"></i></div><small th:text="${zone.duration}">0 min</small></div></div>
+                  </div>
+                  <footer class="calendar-workout-actions"><a class="dialog-download" th:href="@{/workouts/{id}/download(id=${workout.id})}">Pobierz ZWO</a><a class="dialog-download dialog-download-fit" th:href="@{/workouts/{id}/download-fit(id=${workout.id})}">Pobierz FIT</a><form th:action="@{/workouts/{id}/delete(id=${workout.id})}" method="post"><input type="hidden" name="returnTo" value="/calendar"><input type="hidden" name="returnMonth" th:value="${calendarMonth}"><button class="dialog-delete" type="submit">Usuń trening</button></form></footer>
+                </div>
+              </dialog>
+            </th:block>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="/js/calendar-dialog.js" defer></script>
+</body>
+</html>

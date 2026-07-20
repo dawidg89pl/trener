@@ -5,9 +5,82 @@
   gap: 24px;
 }
 
+.plan-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 15px 18px;
+  border: 1px solid;
+  border-radius: 11px;
+  box-shadow: 0 5px 16px rgba(16, 47, 68, .05);
+}
+
+.plan-status.is-active { border-color: #8bc9b6; background: #e2f3ec; }
+.plan-status.is-inactive { border-color: #c3ced5; background: #f5f7f8; }
+.plan-status-dot { width: 12px; height: 12px; flex: 0 0 12px; border-radius: 50%; box-shadow: 0 0 0 5px rgba(72, 91, 102, .1); background: #71818a; }
+.plan-status.is-active .plan-status-dot { box-shadow: 0 0 0 5px rgba(16, 143, 99, .13); background: #108f63; }
+.plan-status > div { min-width: 0; flex: 1; }
+.plan-status small, .plan-status strong { display: block; }
+.plan-status small { margin-bottom: 3px; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .12em; }
+.plan-status strong { color: var(--navy); font-size: 14px; }
+.plan-status p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+.plan-status form { margin: 0; }
+.plan-status button { padding: 9px 12px; border: 1px solid #d38e8e; border-radius: 7px; background: #fff; color: var(--danger); font: 800 10px inherit; cursor: pointer; }
+.plan-status button:hover { background: #fbeaea; }
+
 .dashboard-grid .workouts-card {
   margin-top: 0;
 }
+
+.calendar-promo {
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+
+.calendar-promo-icon {
+  position: relative;
+  width: 58px;
+  height: 54px;
+  margin: 0 auto 20px;
+  border: 2px solid var(--teal);
+  border-radius: 10px;
+  background: #e1f2ee;
+}
+
+.calendar-promo-icon::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 0;
+  left: 0;
+  border-top: 2px solid var(--teal);
+}
+
+.calendar-promo-icon::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 13px;
+  width: 28px;
+  height: 10px;
+  border-right: 3px solid var(--teal);
+  border-left: 3px solid var(--teal);
+}
+
+.calendar-promo-icon span {
+  position: absolute;
+  top: 22px;
+  left: 16px;
+  width: 22px;
+  height: 17px;
+  background: linear-gradient(90deg, var(--teal) 4px, transparent 4px) 0 0 / 9px 7px;
+  opacity: .75;
+}
+
+.calendar-promo h2 { margin: 7px 0 9px; color: var(--navy); font-size: 20px; }
+.calendar-promo > p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.calendar-promo-count { display: block; margin: 20px 0 15px; color: var(--teal-dark); font-size: 11px; }
 
 .recent-events-card {
   margin-top: 24px;
@@ -370,6 +443,44 @@
   border-bottom: 0;
 }
 
+.older-activities {
+  border-top: 1px solid var(--line);
+}
+
+.older-activities > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  background: #edf5f4;
+}
+
+.older-activities > summary::-webkit-details-marker { display: none; }
+
+.older-activities-chevron {
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.older-activities[open] .older-activities-chevron {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.older-activities-list {
+  border-top: 1px solid var(--line);
+}
+
 .dashboard-grid .activity-row {
   grid-template-columns: 20px minmax(120px, 1fr) 62px 58px 70px 74px;
   gap: 9px;
@@ -649,6 +760,9 @@
 }
 
 @media (max-width: 800px) {
+  .plan-status { align-items: flex-start; flex-wrap: wrap; }
+  .plan-status form { width: 100%; padding-left: 26px; }
+
   .analysis-toolbar {
     grid-template-columns: 1fr 1fr;
   }
@@ -714,6 +828,10 @@
 }
 
 @media (max-width: 530px) {
+  .plan-status { margin-right: 0; margin-left: 0; }
+  .plan-status form { padding-left: 0; }
+  .plan-status button { width: 100%; }
+
   .analysis-toolbar {
     grid-template-columns: 1fr;
     padding: 16px 18px;

@@ -12,7 +12,7 @@ public class SecurityConfig {
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/register", "/css/**").permitAll().anyRequest().authenticated())
+                .requestMatchers("/login", "/register", "/css/**", "/js/**").permitAll().anyRequest().authenticated())
             .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
             .build();
