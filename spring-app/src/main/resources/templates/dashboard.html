@@ -27,8 +27,12 @@
     <form th:action="@{/workouts/generate}" method="post" class="card generator-card" data-loading-message="AI przygotowuje Twoje treningi…">
       <div class="card-heading">
         <div><p class="eyebrow">KROK 1</p><h2>Wybierz aktywności do analizy</h2><p>AI uwzględni obciążenie i charakter zaznaczonych jazd.</p></div>
-        <label class="date-field"><span>Start planu</span><input type="date" name="startDate" th:value="${defaultStartDate}" required></label>
       </div>
+      <section class="analysis-toolbar" aria-label="Parametry planu treningowego">
+        <div class="analysis-ftp"><span>FTP ze Stravy</span><strong th:text="${stravaFtp != null ? stravaFtp + ' W' : 'Brak danych'}">Brak danych</strong><small th:if="${stravaFtp == null}">Połącz ponownie Stravę</small></div>
+        <label class="analysis-date"><span>Start planu</span><input type="date" name="startDate" th:value="${defaultStartDate}" required></label>
+        <fieldset class="training-goal"><legend>Cel treningowy</legend><div class="training-goal-options"><label><input type="radio" name="trainingGoal" value="improve_ftp" checked><span>Zwiększyć FTP</span></label><label><input type="radio" name="trainingGoal" value="long_distance_endurance"><span>Długie dystanse</span></label></div></fieldset>
+      </section>
       <div class="weekly-summary-heading"><span>OSTATNIE 7 DNI</span></div>
       <section class="weekly-summary" aria-label="Podsumowanie ostatnich 7 dni">
         <div><span>Treningi</span><strong th:text="${weeklySummary.count}">0</strong></div>
@@ -72,8 +76,18 @@
       <details class="workout-block" th:each="block, blockStatus : ${workoutBlocks}" th:attr="open=${blockStatus.first} ? 'open' : null">
         <summary><span class="calendar-dot">◷</span><span th:text="|Wygenerowano: ${#temporals.format(block.key, 'dd.MM.yyyy HH:mm')}|">Wygenerowano</span><span class="accordion-chevron" aria-hidden="true"></span></summary>
         <div class="workout-row" th:each="workout : ${block.value}">
-          <div class="workout-name"><strong th:text="${workout.name}">Trening</strong><small th:text="|Planowany termin: ${workout.plannedDate}|">Planowany termin</small></div>
-          <div class="workout-actions"><a class="download-link" th:href="@{/workouts/{id}/download(id=${workout.id})}">Pobierz .zwo</a><form th:action="@{/workouts/{id}/delete(id=${workout.id})}" method="post"><button class="delete-button" type="submit">Usuń z listy</button></form></div>
+          <div class="workout-row-heading">
+            <div class="workout-name"><strong th:text="${workout.name}">Trening</strong><small th:text="|Planowany termin: ${workout.plannedDate} · ${workoutSummaries[workout.id].duration}|">Planowany termin</small></div>
+            <div class="workout-actions"><a class="download-link" th:href="@{/workouts/{id}/download(id=${workout.id})}">Pobierz .zwo</a><form th:action="@{/workouts/{id}/delete(id=${workout.id})}" method="post"><button class="delete-button" type="submit">Usuń z listy</button></form></div>
+          </div>
+          <details class="workout-details">
+            <summary><span>Szczegóły treningu</span><span class="workout-details-chevron" aria-hidden="true"></span></summary>
+            <div class="workout-details-content">
+              <p class="workout-description" th:text="${workoutSummaries[workout.id].description}">Opis treningu</p>
+              <div class="power-zones-heading"><strong>Czas w strefach mocy</strong><span>według % FTP</span></div>
+              <div class="power-zone-chart" role="img" th:attr="aria-label=|Czas w strefach mocy dla treningu ${workout.name}|"><div class="power-zone-row" th:each="zone : ${workoutSummaries[workout.id].zones}"><div class="power-zone-label"><strong th:text="${zone.label}">Z1</strong><span th:text="${zone.range}">do 55% FTP</span></div><div class="power-zone-track"><span class="power-zone-bar" th:classappend="| zone-${zone.number}|" th:style="|width: ${zone.percentage}%|"></span></div><span class="power-zone-duration" th:text="${zone.duration}">0 min</span></div></div>
+            </div>
+          </details>
         </div>
       </details>
     </section>

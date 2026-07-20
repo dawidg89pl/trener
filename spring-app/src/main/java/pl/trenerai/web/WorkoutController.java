@@ -28,13 +28,15 @@ public class WorkoutController {
 
     @PostMapping("/workouts/generate")
     String generate(@RequestParam(required = false) List<Long> activityIds, @RequestParam LocalDate startDate,
+            @RequestParam String trainingGoal,
             RedirectAttributes redirect) {
         if (activityIds == null || activityIds.isEmpty()) {
             redirect.addFlashAttribute("error", "Zaznacz co najmniej jedną aktywność przed wygenerowaniem treningów.");
             return "redirect:/";
         }
         try {
-            int count = generator.generate(activityIds, startDate);
+            int count = generator.generate(activityIds, startDate,
+                    WorkoutGenerationService.TrainingGoal.fromId(trainingGoal));
             redirect.addFlashAttribute("message", "Wygenerowano " + count + " pliki ZWO.");
         } catch (Exception error) {
             redirect.addFlashAttribute("error",
