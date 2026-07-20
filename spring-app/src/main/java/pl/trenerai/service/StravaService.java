@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,16 @@ import pl.trenerai.repository.UserSettingsRepository;
 @Service
 public class StravaService {
     public record SyncResult(int activities, int detailed, int withPower, int withHeartRate, int withCadence) {}
+
+    private static final Set<String> CYCLING_ACTIVITY_TYPES = Set.of(
+            "Ride",
+            "MountainBikeRide",
+            "GravelRide",
+            "VirtualRide",
+            "EBikeRide",
+            "EMountainBikeRide",
+            "Velomobile",
+            "Handcycle");
 
     private final CurrentUserService current;
     private final UserSettingsRepository settings;
@@ -59,7 +70,7 @@ public class StravaService {
                 "client_id", client,
                 "redirect_uri", publicUrl + "/strava/callback",
                 "response_type", "code",
-                "scope", "activity:read_all"));
+                "scope", "profile:read_all,activity:read_all"));
     }
 
     @Transactional
@@ -72,6 +83,7 @@ public class StravaService {
                 "code", code,
                 "grant_type", "authorization_code"));
         saveToken(user, data);
+        updateAthleteFtp(current.settings(), data.path("access_token").asText());
         eventLog.record(user, "STRAVA_CONNECTED", "Połączono konto ze Stravą");
     }
 
@@ -85,6 +97,7 @@ public class StravaService {
         }
 
         String accessToken = crypto.decrypt(token.getAccessTokenEncrypted());
+        updateAthleteFtp(current.settings(), accessToken);
         JsonNode summaries = get("https://www.strava.com/api/v3/athlete/activities?per_page=30", accessToken);
         if (!summaries.isArray()) {
             throw new IllegalStateException("Strava nie zwróciła listy aktywności.");
@@ -94,7 +107,12 @@ public class StravaService {
         int withPower = 0;
         int withHeartRate = 0;
         int withCadence = 0;
+        int cyclingActivities = 0;
         for (JsonNode summary : summaries) {
+            if (!isCyclingActivity(summary)) {
+                continue;
+            }
+            cyclingActivities++;
             long remoteId = summary.path("id").asLong();
             JsonNode source = summary;
             try {
@@ -114,8 +132,13 @@ public class StravaService {
             if (activity.getAverageCadence() != null) withCadence++;
         }
         eventLog.record(user, "STRAVA_SYNC", "Zsynchronizowano ze Stravą "
-                + summaries.size() + " aktywności");
-        return new SyncResult(summaries.size(), detailed, withPower, withHeartRate, withCadence);
+                + cyclingActivities + " aktywności rowerowych");
+        return new SyncResult(cyclingActivities, detailed, withPower, withHeartRate, withCadence);
+    }
+
+    private boolean isCyclingActivity(JsonNode activity) {
+        return CYCLING_ACTIVITY_TYPES.contains(activity.path("sport_type").asText())
+                || CYCLING_ACTIVITY_TYPES.contains(activity.path("type").asText());
     }
 
     private void updateActivity(Activity activity, JsonNode row) {
@@ -153,6 +176,20 @@ public class StravaService {
                 row.path("trainer").asBoolean(false),
                 row.path("commute").asBoolean(false),
                 row.path("manual").asBoolean(false));
+    }
+
+    private void updateAthleteFtp(UserSettings userSettings, String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) return;
+        try {
+            JsonNode athlete = get("https://www.strava.com/api/v3/athlete", accessToken);
+            JsonNode ftp = athlete.get("ftp");
+            if (ftp != null) {
+                userSettings.setStravaFtp(ftp.isNumber() && ftp.asInt() > 0 ? ftp.asInt() : null);
+                settings.save(userSettings);
+            }
+        } catch (Exception ignored) {
+            // Brak dostępu do profilu nie powinien blokować synchronizacji aktywności.
+        }
     }
 
     private JsonNode get(String url, String accessToken) throws Exception {

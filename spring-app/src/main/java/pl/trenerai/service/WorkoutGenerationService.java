@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -21,17 +22,39 @@ import pl.trenerai.repository.*;
 
 @Service
 public class WorkoutGenerationService {
+    public enum TrainingGoal {
+        IMPROVE_FTP("improve_ftp", "zwiększenie FTP", "Skup plan na progresji mocy progowej, interwałach sweet spot, progowych i VO₂max."),
+        LONG_DISTANCE_ENDURANCE("long_distance_endurance", "wytrzymałość na długich dystansach", "Skup plan na dłuższej pracy tlenowej w Z2, tempie i odporności na zmęczenie podczas długich jazd.");
+
+        private final String id;
+        private final String label;
+        private final String promptInstruction;
+
+        TrainingGoal(String id, String label, String promptInstruction) {
+            this.id = id;
+            this.label = label;
+            this.promptInstruction = promptInstruction;
+        }
+
+        public String label() { return label; }
+        public String promptInstruction() { return promptInstruction; }
+        public static TrainingGoal fromId(String id) {
+            for (TrainingGoal goal : values()) if (goal.id.equals(id)) return goal;
+            throw new IllegalArgumentException("Wybierz prawidłowy cel treningowy.");
+        }
+    }
+
     private final CurrentUserService current; private final UserSettingsRepository settings; private final ActivityRepository activities; private final GeneratedWorkoutRepository workouts; private final SecretCrypto crypto; private final UserEventService eventLog;
     private final ObjectMapper json = new ObjectMapper(); private final HttpClient http = HttpClient.newHttpClient();
     public WorkoutGenerationService(CurrentUserService current, UserSettingsRepository settings, ActivityRepository activities, GeneratedWorkoutRepository workouts, SecretCrypto crypto, UserEventService eventLog) { this.current=current;this.settings=settings;this.activities=activities;this.workouts=workouts;this.crypto=crypto;this.eventLog=eventLog; }
 
     @Transactional
-    public int generate(List<Long> activityIds, LocalDate startDate) throws Exception {
-        AppUser user=current.get(); String apiKey=crypto.decrypt(current.settings().getOpenAiKeyEncrypted());
-        if(apiKey.isBlank()) throw new IllegalStateException("Najpierw zapisz klucz OpenAI w ustawieniach.");
+    public int generate(List<Long> activityIds, LocalDate startDate, TrainingGoal trainingGoal) throws Exception {
+        AppUser user=current.get(); UserSettings userSettings=current.settings(); String apiKey=crypto.decrypt(userSettings.getOpenAiKeyEncrypted());
+        if(apiKey.isBlank()) throw new IllegalStateException("Najpierw zapisz klucz dostawcy AI w ustawieniach.");
         List<Activity> selected=activities.findByIdInAndUserId(activityIds,user.getId());
         if(selected.isEmpty()) throw new IllegalStateException("Wybierz przynajmniej jedną aktywność.");
-        JsonNode response=callOpenAi(apiKey, selected, startDate);
+        JsonNode response=callAi(apiKey, userSettings.getAiProvider(), userSettings.getOpenAiModel(), selected, startDate, trainingGoal, userSettings.getStravaFtp());
         JsonNode list=response.path("treningi");
         if(!list.isArray()||list.isEmpty()) throw new IllegalStateException("OpenAI nie zwróciło treningów w wymaganym formacie.");
         int count=0; for(JsonNode workout:list){ if(count==3) break; LocalDate date=startDate.plusDays(count*2L); String name=workout.path("name").asText("Trening "+(count+1)); workouts.save(new GeneratedWorkout(user,name,date,toZwo(workout,date))); count++; }
@@ -40,13 +63,29 @@ public class WorkoutGenerationService {
         return count;
     }
 
-    private JsonNode callOpenAi(String key,List<Activity> activities,LocalDate start) throws Exception {
+    private JsonNode callAi(String key,String providerId,String model,List<Activity> activities,LocalDate start,TrainingGoal trainingGoal,Integer ftp) throws Exception {
         String activityJson=json.writeValueAsString(activities.stream().map(this::activityPayload).toList());
-        String prompt="Jesteś trenerem kolarstwa. Na podstawie aktywności przygotuj DOKŁADNIE 3 treningi od "+start+". Zwróć wyłącznie JSON: {\"treningi\":[{\"name\":string,\"description\":string,\"steps\":[{\"intensity\":\"warmup|steady|cooldown\",\"duration_sec\":number,\"power\":number,\"power_low\":number,\"power_high\":number,\"cadence\":number}]}]}. Power to ułamek FTP. Aktywności: "+activityJson;
-        String body=json.writeValueAsString(java.util.Map.of("model","gpt-4o","response_format",java.util.Map.of("type","json_object"),"messages",List.of(java.util.Map.of("role","user","content",prompt)),"temperature",0.7));
-        HttpRequest request=HttpRequest.newBuilder(URI.create("https://api.openai.com/v1/chat/completions")).header("Authorization","Bearer "+key).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body,StandardCharsets.UTF_8)).build();
-        HttpResponse<String> response=http.send(request,HttpResponse.BodyHandlers.ofString()); if(response.statusCode()<200||response.statusCode()>=300) throw new IllegalStateException("OpenAI odrzuciło żądanie (HTTP "+response.statusCode()+").");
+        String ftpContext=ftp==null?"FTP zawodnika nie jest dostępne w profilu Strava.":"Aktualne FTP zawodnika ze Stravy: "+ftp+" W.";
+        String prompt="Jesteś trenerem kolarstwa. Na podstawie aktywności przygotuj DOKŁADNIE 3 treningi od "+start+". Główny cel planu: "+trainingGoal.label()+". "+trainingGoal.promptInstruction()+" "+ftpContext+" Zwróć wyłącznie JSON: {\"treningi\":[{\"name\":string,\"description\":string,\"steps\":[{\"intensity\":\"warmup|steady|cooldown\",\"duration_sec\":number,\"power\":number,\"power_low\":number,\"power_high\":number,\"cadence\":number}]}]}. Power, power_low i power_high podawaj jako ułamek FTP. W opisie uzasadnij, jak trening realizuje wybrany cel. Aktywności: "+activityJson;
+        AiProviderCatalog.Provider provider=AiProviderCatalog.provider(providerId);
+        java.util.Map<String,Object> requestBody=new LinkedHashMap<>();
+        requestBody.put("model",model);
+        requestBody.put("response_format",java.util.Map.of("type","json_object"));
+        requestBody.put("messages",List.of(java.util.Map.of("role","user","content",prompt)));
+        if(!"gemini".equals(providerId)) requestBody.put("temperature",0.7);
+        String body=json.writeValueAsString(requestBody);
+        HttpRequest request=HttpRequest.newBuilder(URI.create(provider.chatCompletionsUrl())).header("Authorization","Bearer "+key).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body,StandardCharsets.UTF_8)).build();
+        HttpResponse<String> response=http.send(request,HttpResponse.BodyHandlers.ofString()); if(response.statusCode()<200||response.statusCode()>=300) throw new IllegalStateException(provider.label()+" odrzucił żądanie (HTTP "+response.statusCode()+"): "+apiErrorMessage(response.body()));
+
         return json.readTree(response.body()).path("choices").get(0).path("message").path("content").isTextual() ? json.readTree(json.readTree(response.body()).path("choices").get(0).path("message").path("content").asText()) : json.readTree(response.body());
+    }
+
+    private String apiErrorMessage(String responseBody) {
+        try {
+            String message=json.readTree(responseBody).path("error").path("message").asText();
+            if(!message.isBlank()) return message.length()>400?message.substring(0,400)+"…":message;
+        } catch(Exception ignored) {}
+        return "Brak szczegółów błędu po stronie dostawcy.";
     }
 
     private String toZwo(JsonNode workout,LocalDate date) throws Exception {

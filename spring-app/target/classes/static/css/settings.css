@@ -1,0 +1,30 @@
+.form-stack select {
+    width: 100%;
+    border: 1px solid #d0dfe0;
+    border-radius: 7px;
+    background: #fbfcfc;
+    padding: 11px 12px;
+    color: var(--ink);
+    font: 400 13px inherit;
+    outline: none;
+    transition: .15s border, .15s box-shadow;
+}
+
+.form-stack select:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px #d9f1ec;
+}
+
+.api-key-link {
+    width: fit-content;
+    margin-top: -8px;
+    color: var(--teal);
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.api-key-link:hover {
+    color: var(--teal-dark);
+    text-decoration: underline;
+}

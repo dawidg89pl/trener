@@ -12,6 +12,7 @@ C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\StravaTokenRepository.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\UserEventRepository.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\UserSettingsRepository.java
+C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\AiProviderCatalog.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\CurrentUserService.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\DatabaseUserDetailsService.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\SecretCrypto.java
@@ -19,6 +20,7 @@ C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\Str
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\UserBootstrapService.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\UserEventService.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\WorkoutGenerationService.java
+C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\service\WorkoutSummaryService.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\TrenerAiApplication.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\web\AuthController.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\web\DashboardController.java
