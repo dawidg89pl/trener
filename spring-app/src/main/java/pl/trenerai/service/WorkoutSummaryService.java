@@ -24,6 +24,7 @@ public class WorkoutSummaryService {
 
     public WorkoutSummary summarize(GeneratedWorkout workout) {
         int[] zoneSeconds = new int[ZONE_LABELS.length];
+        List<RawStep> rawSteps = new ArrayList<>();
         try {
             var document = secureDocumentBuilderFactory().newDocumentBuilder()
                     .parse(new InputSource(new StringReader(workout.getZwoContent())));
@@ -34,28 +35,38 @@ public class WorkoutSummaryService {
                 Node workoutNode = workoutNodes.item(0);
                 for (int index = 0; index < workoutNode.getChildNodes().getLength(); index++) {
                     Node node = workoutNode.getChildNodes().item(index);
-                    if (node instanceof Element step) addStep(step, zoneSeconds);
+                    if (node instanceof Element step) addStep(step, zoneSeconds, rawSteps);
                 }
             }
-            return buildSummary(description, zoneSeconds);
+            return buildSummary(description, zoneSeconds, rawSteps);
         } catch (Exception ignored) {
-            return buildSummary("Opis treningu jest dostępny w pliku ZWO.", zoneSeconds);
+            return buildSummary("Opis treningu jest dostępny w pliku ZWO.", zoneSeconds, rawSteps);
         }
     }
 
-    private void addStep(Element step, int[] zoneSeconds) {
+    private void addStep(Element step, int[] zoneSeconds, List<RawStep> rawSteps) {
         if ("IntervalsT".equals(step.getTagName())) {
             int repeats = intAttribute(step, "Repeat", 1);
+            int cadence = intAttribute(step, "Cadence", 0);
             for (int repeat = 0; repeat < repeats; repeat++) {
-                addConstant(zoneSeconds, intAttribute(step, "OnDuration", 0), doubleAttribute(step, "OnPower", 0));
-                addConstant(zoneSeconds, intAttribute(step, "OffDuration", 0), doubleAttribute(step, "OffPower", 0));
+                int onDuration = intAttribute(step, "OnDuration", 0);
+                double onPower = doubleAttribute(step, "OnPower", 0);
+                addConstant(zoneSeconds, onDuration, onPower);
+                rawSteps.add(new RawStep("Interwał", onDuration, onPower, onPower, cadence));
+                int offDuration = intAttribute(step, "OffDuration", 0);
+                double offPower = doubleAttribute(step, "OffPower", 0);
+                addConstant(zoneSeconds, offDuration, offPower);
+                rawSteps.add(new RawStep("Regeneracja", offDuration, offPower, offPower, cadence));
             }
             return;
         }
         int duration = intAttribute(step, "Duration", 0);
         if (duration <= 0) return;
+        int cadence = intAttribute(step, "Cadence", 0);
         if (step.hasAttribute("Power")) {
-            addConstant(zoneSeconds, duration, doubleAttribute(step, "Power", 0));
+            double power = doubleAttribute(step, "Power", 0);
+            addConstant(zoneSeconds, duration, power);
+            rawSteps.add(new RawStep(stepLabel(step.getTagName()), duration, power, power, cadence));
         } else if (step.hasAttribute("PowerLow") || step.hasAttribute("PowerHigh")) {
             double low = doubleAttribute(step, "PowerLow", 0);
             double high = doubleAttribute(step, "PowerHigh", low);
@@ -63,6 +74,7 @@ public class WorkoutSummaryService {
                 double progress = (second + 0.5) / duration;
                 zoneSeconds[zoneIndex(low + (high - low) * progress)]++;
             }
+            rawSteps.add(new RawStep(stepLabel(step.getTagName()), duration, low, high, cadence));
         }
     }
 
@@ -77,7 +89,7 @@ public class WorkoutSummaryService {
         return ZONE_LABELS.length - 1;
     }
 
-    private WorkoutSummary buildSummary(String description, int[] seconds) {
+    private WorkoutSummary buildSummary(String description, int[] seconds, List<RawStep> rawSteps) {
         int totalSeconds = 0;
         for (int value : seconds) totalSeconds += value;
         List<PowerZone> zones = new ArrayList<>();
@@ -86,7 +98,33 @@ public class WorkoutSummaryService {
             zones.add(new PowerZone(index + 1, ZONE_LABELS[index], ZONE_RANGES[index],
                     formatDuration(seconds[index]), percentage));
         }
-        return new WorkoutSummary(description, formatDuration(totalSeconds), zones);
+        double maximumPower = rawSteps.stream().mapToDouble(step -> Math.max(step.powerLow(), step.powerHigh()))
+                .max().orElse(1.0);
+        maximumPower = Math.max(1.0, maximumPower);
+        List<WorkoutStep> steps = new ArrayList<>();
+        for (RawStep step : rawSteps) {
+            if (step.durationSeconds() <= 0) continue;
+            double width = totalSeconds == 0 ? 0 : step.durationSeconds() * 100.0 / totalSeconds;
+            double startHeight = 14 + Math.min(1, step.powerLow() / maximumPower) * 80;
+            double endHeight = 14 + Math.min(1, step.powerHigh() / maximumPower) * 80;
+            String power = Math.round(step.powerLow() * 100) == Math.round(step.powerHigh() * 100)
+                    ? Math.round(step.powerLow() * 100) + "% FTP"
+                    : Math.round(step.powerLow() * 100) + "–" + Math.round(step.powerHigh() * 100) + "% FTP";
+            String cadence = step.cadence() > 0 ? step.cadence() + " rpm" : "Bez wskazania kadencji";
+            steps.add(new WorkoutStep(step.label(), formatDuration(step.durationSeconds()), power, cadence,
+                    width, startHeight, endHeight));
+        }
+        return new WorkoutSummary(description, formatDuration(totalSeconds), zones, steps);
+    }
+
+    private String stepLabel(String tagName) {
+        return switch (tagName) {
+            case "Warmup" -> "Rozgrzewka";
+            case "Cooldown" -> "Schłodzenie";
+            case "Ramp" -> "Rampa mocy";
+            case "FreeRide" -> "Jazda swobodna";
+            default -> "Odcinek ze stałą mocą";
+        };
     }
 
     private DocumentBuilderFactory secureDocumentBuilderFactory() throws Exception {
@@ -112,6 +150,9 @@ public class WorkoutSummaryService {
         return minutes >= 60 ? minutes / 60 + " h " + minutes % 60 + " min" : minutes + " min";
     }
 
-    public record WorkoutSummary(String description, String duration, List<PowerZone> zones) {}
+    private record RawStep(String label, int durationSeconds, double powerLow, double powerHigh, int cadence) {}
+    public record WorkoutSummary(String description, String duration, List<PowerZone> zones, List<WorkoutStep> steps) {}
     public record PowerZone(int number, String label, String range, String duration, double percentage) {}
+    public record WorkoutStep(String label, String duration, String power, String cadence,
+            double widthPercentage, double startHeight, double endHeight) {}
 }
