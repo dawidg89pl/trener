@@ -1,3 +1,42 @@
 <!doctype html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rejestracja · Trener AI</title><link rel="stylesheet" href="/css/app.css"></head>
-<body class="auth-page"><main class="auth-layout"><section class="auth-intro"><a class="brand brand-light" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a><div><p class="eyebrow">TWOJE KONTO</p><h1>Treningi pod kontrolą.</h1><p>Każdy użytkownik ma własne dane Stravy, konfigurację i archiwum treningów.</p></div><p class="auth-note">Hasła są bezpiecznie hashowane, a klucze API szyfrowane w bazie.</p></section><section class="auth-card"><p class="eyebrow">REJESTRACJA</p><h2>Utwórz konto</h2><p class="card-description">Zajmie to tylko chwilę.</p><form th:action="@{/register}" th:object="${form}" method="post" class="form-stack"><label>E-mail<input type="email" th:field="*{email}" autocomplete="email" required placeholder="ty@przyklad.pl"></label><small class="field-error" th:errors="*{email}"></small><label>Hasło<input type="password" th:field="*{password}" autocomplete="new-password" required placeholder="Minimum 8 znaków"></label><small class="field-error" th:errors="*{password}"></small><label>Powtórz hasło<input type="password" th:field="*{passwordConfirmation}" autocomplete="new-password" required placeholder="Powtórz hasło"></label><small class="field-error" th:errors="*{passwordConfirmation}"></small><button class="button button-primary wide" type="submit">Utwórz konto <span>→</span></button></form><p class="auth-switch">Masz już konto? <a href="/login">Zaloguj się</a></p></section></main></body></html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rejestracja · Trener AI</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+
+<body class="auth-page">
+    <main class="auth-layout">
+        <section class="auth-intro"><a class="brand brand-light" href="/"><span class="brand-icon">T</span><span>Trener
+                    <b>AI</b><small>PLANY KOLARSKIE</small></span></a>
+            <div>
+                <p class="eyebrow">TWOJE KONTO</p>
+                <h1>Treningi pod kontrolą.</h1>
+                <!-- <p>Każdy użytkownik ma własne dane Stravy, konfigurację i archiwum treningów.</p> -->
+            </div>
+           <!-- <p class="auth-note">Hasła są bezpiecznie hashowane, a klucze API szyfrowane w bazie.</p> -->
+        </section>
+        <section class="auth-card">
+            <p class="eyebrow">REJESTRACJA</p>
+            <h2>Utwórz konto</h2>
+            <p class="card-description">Zajmie to tylko chwilę.</p>
+            <form th:action="@{/register}" th:object="${form}" method="post" class="form-stack"><label>E-mail<input
+                        type="email" th:field="*{email}" autocomplete="email" required
+                        placeholder="ty@przyklad.pl"></label><small class="field-error"
+                    th:errors="*{email}"></small><label>Hasło<input type="password" th:field="*{password}"
+                        autocomplete="new-password" required placeholder="Minimum 8 znaków"></label><small
+                    class="field-error" th:errors="*{password}"></small><label>Powtórz hasło<input type="password"
+                        th:field="*{passwordConfirmation}" autocomplete="new-password" required
+                        placeholder="Powtórz hasło"></label><small class="field-error"
+                    th:errors="*{passwordConfirmation}"></small><button class="button button-primary wide"
+                    type="submit">Utwórz konto <span>→</span></button></form>
+            <p class="auth-switch">Masz już konto? <a href="/login">Zaloguj się</a></p>
+        </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+
+</html>
