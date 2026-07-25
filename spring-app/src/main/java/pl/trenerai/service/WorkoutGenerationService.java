@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.*;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -44,19 +45,22 @@ public class WorkoutGenerationService {
         }
     }
 
-    private final CurrentUserService current; private final UserSettingsRepository settings; private final ActivityRepository activities; private final GeneratedWorkoutRepository workouts; private final SecretCrypto crypto; private final UserEventService eventLog;
+    private final CurrentUserService current; private final UserSettingsRepository settings; private final ActivityRepository activities; private final GeneratedWorkoutRepository workouts; private final AiPromptRepository aiPrompts; private final SecretCrypto crypto; private final UserEventService eventLog;
     private final ObjectMapper json = new ObjectMapper(); private final HttpClient http = HttpClient.newHttpClient();
-    public WorkoutGenerationService(CurrentUserService current, UserSettingsRepository settings, ActivityRepository activities, GeneratedWorkoutRepository workouts, SecretCrypto crypto, UserEventService eventLog) { this.current=current;this.settings=settings;this.activities=activities;this.workouts=workouts;this.crypto=crypto;this.eventLog=eventLog; }
+    public WorkoutGenerationService(CurrentUserService current, UserSettingsRepository settings, ActivityRepository activities, GeneratedWorkoutRepository workouts, AiPromptRepository aiPrompts, SecretCrypto crypto, UserEventService eventLog) { this.current=current;this.settings=settings;this.activities=activities;this.workouts=workouts;this.aiPrompts=aiPrompts;this.crypto=crypto;this.eventLog=eventLog; }
 
     @Transactional
-    public int generate(List<Long> activityIds, LocalDate startDate, TrainingGoal trainingGoal) throws Exception {
+    public int generate(List<Long> activityIds, LocalDate startDate, TrainingGoal trainingGoal,
+            BigDecimal weeklyTrainingHours) throws Exception {
         AppUser user=current.get(); UserSettings userSettings=current.settings(); String apiKey=crypto.decrypt(userSettings.getOpenAiKeyEncrypted());
         if(workouts.existsByUserIdAndDeletedFalse(user.getId())) throw new IllegalStateException("Masz już aktywny plan. Anuluj go przed wygenerowaniem nowego.");
         if(apiKey.isBlank()) throw new IllegalStateException("Najpierw zapisz klucz dostawcy AI w ustawieniach.");
+        if(weeklyTrainingHours == null || weeklyTrainingHours.compareTo(BigDecimal.ONE) < 0
+                || weeklyTrainingHours.compareTo(BigDecimal.valueOf(40)) > 0)
+            throw new IllegalStateException("Podaj dostępny czas na trening od 1 do 40 godzin tygodniowo.");
         List<Activity> selected=activities.findByIdInAndUserId(activityIds,user.getId());
         if(selected.isEmpty()) throw new IllegalStateException("Wybierz przynajmniej jedną aktywność.");
-        JsonNode response=callAi(apiKey, userSettings.getAiProvider(), userSettings.getOpenAiModel(), selected, startDate, trainingGoal, userSettings.getStravaFtp());
-        JsonNode list=response.path("dni");
+        JsonNode list=callAi(apiKey, userSettings.getAiProvider(), userSettings.getOpenAiModel(), selected, startDate, trainingGoal, userSettings.getStravaFtp(), weeklyTrainingHours, user).path("dni");
         if(!list.isArray()||list.size()!=7) throw new IllegalStateException("Dostawca AI nie zwrócił pełnego planu na 7 dni w wymaganym formacie.");
         int count=0;
         for(int dayIndex=0;dayIndex<7;dayIndex++){
@@ -87,10 +91,12 @@ public class WorkoutGenerationService {
         return activeWorkouts.size();
     }
 
-    private JsonNode callAi(String key,String providerId,String model,List<Activity> activities,LocalDate start,TrainingGoal trainingGoal,Integer ftp) throws Exception {
+    private JsonNode callAi(String key,String providerId,String model,List<Activity> activities,LocalDate start,TrainingGoal trainingGoal,Integer ftp,BigDecimal weeklyTrainingHours,AppUser user) throws Exception {
         String activityJson=json.writeValueAsString(activities.stream().map(this::activityPayload).toList());
-        String ftpContext=ftp==null?"FTP zawodnika nie jest dostępne w profilu Strava.":"Aktualne FTP zawodnika ze Stravy: "+ftp+" W.";
-        String prompt="Jesteś trenerem kolarstwa. Ułóż plan na DOKŁADNIE 7 kolejnych dni, od "+start+" do "+start.plusDays(6)+". Dla każdego dnia zdecyduj, czy zawodnik powinien wykonać trening (type=workout), czy odpoczywać (type=rest). Liczbę treningów dobierz samodzielnie na podstawie obciążenia, zmęczenia i charakteru analizowanych aktywności; nie wypełniaj każdego dnia treningiem, jeśli regeneracja będzie korzystniejsza. Główny cel planu: "+trainingGoal.label()+". "+trainingGoal.promptInstruction()+" "+ftpContext+" Zwróć wyłącznie JSON zawierający dokładnie 7 elementów w kolejności dni: {\"dni\":[{\"day\":1,\"type\":\"workout|rest\",\"name\":string,\"description\":string,\"steps\":[{\"intensity\":\"warmup|steady|cooldown\",\"duration_sec\":number,\"power\":number,\"power_low\":number,\"power_high\":number,\"cadence\":number}]}]}. Dla dnia odpoczynku zwróć pustą tablicę steps. Power, power_low i power_high podawaj jako ułamek FTP. W opisie dnia treningowego uzasadnij, jak realizuje wybrany cel i uwzględnia regenerację po pozostałych dniach. Aktywności: "+activityJson;
+        String ftpContext=ftp==null?"FTP zawodnika nie jest dostępne.":"Aktualne FTP zawodnika: "+ftp+" W.";
+        int weeklyTrainingSeconds=weeklyTrainingHours.multiply(BigDecimal.valueOf(3600)).intValue();
+        String prompt="Jesteś trenerem kolarstwa. Ułóż plan na DOKŁADNIE 7 kolejnych dni, od "+start+" do "+start.plusDays(6)+". Łączny czas wszystkich treningów w planie ma wynosić DOKŁADNIE "+weeklyTrainingHours.stripTrailingZeros().toPlainString()+" godz., czyli suma duration_sec wszystkich kroków ze wszystkich 7 dni ma wynosić DOKŁADNIE "+weeklyTrainingSeconds+" sekund. Rozdziel ten czas pomiędzy dni treningowe, uwzględniając obciążenie, zmęczenie, charakter analizowanych aktywności oraz potrzebną regenerację. Główny cel planu: "+trainingGoal.label()+". "+trainingGoal.promptInstruction()+" "+ftpContext+" Zwróć wyłącznie JSON zawierający dokładnie 7 elementów w kolejności dni: {\"dni\":[{\"day\":1,\"type\":\"workout|rest\",\"name\":string,\"description\":string,\"steps\":[{\"intensity\":\"warmup|steady|cooldown\",\"duration_sec\":number,\"power\":number,\"power_low\":number,\"power_high\":number,\"cadence\":number}]}]}. Dla dnia odpoczynku zwróć pustą tablicę steps. Power, power_low i power_high podawaj jako ułamek FTP. Przed zwróceniem odpowiedzi zsumuj duration_sec i upewnij się, że wynik jest równy dokładnie "+weeklyTrainingSeconds+" sekund. W opisie dnia treningowego uzasadnij, jak realizuje wybrany cel i uwzględnia regenerację po pozostałych dniach. Aktywności: "+activityJson;
+        aiPrompts.save(new AiPrompt(user,prompt));
         AiProviderCatalog.Provider provider=AiProviderCatalog.provider(providerId);
         java.util.Map<String,Object> requestBody=new LinkedHashMap<>();
         requestBody.put("model",model);

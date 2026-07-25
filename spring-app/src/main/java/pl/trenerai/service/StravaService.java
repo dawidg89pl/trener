@@ -47,10 +47,14 @@ public class StravaService {
     private final ObjectMapper json = new ObjectMapper();
     private final HttpClient http = HttpClient.newHttpClient();
     private final String publicUrl;
+    private final String clientId;
+    private final String clientSecret;
 
     public StravaService(CurrentUserService c, UserSettingsRepository s, StravaTokenRepository t,
             ActivityRepository a, SecretCrypto crypto, UserEventService eventLog,
-            @Value("${app.public-url}") String url) {
+            @Value("${app.public-url}") String url,
+            @Value("${app.strava.client-id:}") String clientId,
+            @Value("${app.strava.client-secret:}") String clientSecret) {
         current = c;
         settings = s;
         tokens = t;
@@ -58,31 +62,41 @@ public class StravaService {
         this.crypto = crypto;
         this.eventLog = eventLog;
         publicUrl = url.replaceAll("/$", "");
+        this.clientId = clientId.trim();
+        this.clientSecret = clientSecret.trim();
     }
 
-    public String authorizationUrl() {
-        var set = current.settings();
-        String client = crypto.decrypt(set.getStravaClientIdEncrypted());
-        if (client.isBlank()) {
-            throw new IllegalStateException("Najpierw zapisz Client ID oraz Client Secret Stravy w ustawieniach.");
-        }
+    public String authorizationUrl(String state) {
+        requireConfiguration();
         return "https://www.strava.com/oauth/authorize?" + form(Map.of(
-                "client_id", client,
+                "client_id", clientId,
                 "redirect_uri", publicUrl + "/strava/callback",
                 "response_type", "code",
-                "scope", "profile:read_all,activity:read_all"));
+                "approval_prompt", "force",
+                "scope", "profile:read_all,activity:read_all",
+                "state", state));
     }
 
     @Transactional
     public void callback(String code) throws Exception {
+        requireConfiguration();
         AppUser user = current.get();
-        var set = current.settings();
         JsonNode data = post("https://www.strava.com/oauth/token", Map.of(
-                "client_id", crypto.decrypt(set.getStravaClientIdEncrypted()),
-                "client_secret", crypto.decrypt(set.getStravaClientSecretEncrypted()),
+                "client_id", clientId,
+                "client_secret", clientSecret,
                 "code", code,
                 "grant_type", "authorization_code"));
-        saveToken(user, data);
+        long athleteId = data.path("athlete").path("id").asLong();
+        if (athleteId <= 0) {
+            throw new IllegalStateException("Strava nie zwróciła identyfikatora konta użytkownika.");
+        }
+        tokens.findByStravaAthleteId(athleteId)
+                .filter(existing -> !existing.getUserId().equals(user.getId()))
+                .ifPresent(existing -> {
+                    throw new IllegalStateException(
+                            "To konto Strava jest już połączone z innym użytkownikiem aplikacji.");
+                });
+        saveToken(user, athleteId, data);
         updateAthleteFtp(current.settings(), data.path("access_token").asText());
         eventLog.record(user, "STRAVA_CONNECTED", "Połączono konto ze Stravą");
     }
@@ -92,8 +106,12 @@ public class StravaService {
         AppUser user = current.get();
         StravaToken token = tokens.findById(user.getId())
                 .orElseThrow(() -> new IllegalStateException("Najpierw połącz konto Strava."));
+        if (token.getStravaAthleteId() == null) {
+            throw new IllegalStateException(
+                    "Połączenie Strava wymaga odnowienia. Kliknij „Połącz ponownie Stravę”.");
+        }
         if (token.getExpiresAt().isBefore(Instant.now().plusSeconds(60))) {
-            tokenRefresh(user, current.settings(), token);
+            tokenRefresh(user, token);
         }
 
         String accessToken = crypto.decrypt(token.getAccessTokenEncrypted());
@@ -204,23 +222,31 @@ public class StravaService {
         return json.readTree(response.body());
     }
 
-    private void tokenRefresh(AppUser user, UserSettings set, StravaToken token) throws Exception {
+    private void tokenRefresh(AppUser user, StravaToken token) throws Exception {
+        requireConfiguration();
         JsonNode data = post("https://www.strava.com/oauth/token", Map.of(
-                "client_id", crypto.decrypt(set.getStravaClientIdEncrypted()),
-                "client_secret", crypto.decrypt(set.getStravaClientSecretEncrypted()),
+                "client_id", clientId,
+                "client_secret", clientSecret,
                 "refresh_token", crypto.decrypt(token.getRefreshTokenEncrypted()),
                 "grant_type", "refresh_token"));
-        saveToken(user, data);
+        saveToken(user, null, data);
     }
 
-    private void saveToken(AppUser user, JsonNode data) {
+    private void requireConfiguration() {
+        if (clientId.isBlank() || clientSecret.isBlank()) {
+            throw new IllegalStateException(
+                    "Integracja Strava nie została skonfigurowana przez administratora.");
+        }
+    }
+
+    private void saveToken(AppUser user, Long athleteId, JsonNode data) {
         String access = crypto.encrypt(data.path("access_token").asText());
         String refresh = crypto.encrypt(data.path("refresh_token").asText());
         Instant expires = Instant.ofEpochSecond(data.path("expires_at").asLong());
         tokens.findById(user.getId()).ifPresentOrElse(existing -> {
-            existing.update(access, refresh, expires);
+            existing.update(athleteId, access, refresh, expires);
             tokens.save(existing);
-        }, () -> tokens.save(new StravaToken(user, access, refresh, expires)));
+        }, () -> tokens.save(new StravaToken(user, athleteId, access, refresh, expires)));
     }
 
     private JsonNode post(String url, Map<String, String> values) throws Exception {

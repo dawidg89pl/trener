@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="pl" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ustawienia · Trener AI</title><link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/settings.css"><link rel="stylesheet" href="/css/readability.css"><link rel="stylesheet" href="/css/mobile-nav.css"><link rel="stylesheet" href="/css/theme.css"><script src="/js/theme.js"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ustawienia · Trener AI</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/settings.css"><link rel="stylesheet" href="/css/readability.css"><link rel="stylesheet" href="/css/mobile-nav.css"><link rel="stylesheet" href="/css/theme.css"><script src="/js/theme.js"></script></head>
 <body>
-<header class="topbar"><a class="brand" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a><nav class="nav-links"><a class="nav-link" href="/">Panel</a><a class="nav-link" href="/calendar">Kalendarz</a><a class="nav-link active" href="/settings">Ustawienia</a><a class="nav-link" href="/faq">FAQ</a><button class="theme-toggle" type="button" data-theme-toggle><span class="theme-icon-sun">☀</span><span class="theme-icon-moon">☾</span></button></nav></header>
+<header class="topbar"><a class="brand" href="/"><span class="brand-icon">T</span><span>Trener <b>AI</b><small>PLANY KOLARSKIE</small></span></a><nav class="nav-links"><a class="nav-link" href="/">Panel</a><a class="nav-link active" href="/settings">Ustawienia</a><a class="nav-link" href="/faq">FAQ</a><button class="theme-toggle" type="button" data-theme-toggle><span class="theme-icon-sun">☀</span><span class="theme-icon-moon">☾</span></button></nav></header>
 <main class="settings-layout">
-  <section class="settings-intro"><p class="eyebrow">KONFIGURACJA</p><h1>Połącz narzędzia</h1><p>Wprowadź dane dostępu, aby aplikacja pobierała aktywności Strava i tworzyła treningi przez wybranego dostawcę AI.</p><div class="security-note"><span>⌁</span><p>Klucze i tokeny są szyfrowane przed zapisem w bazie danych.</p></div></section>
+  <section class="settings-intro"><p class="eyebrow">KONFIGURACJA</p><h1>Połącz narzędzia</h1><p>Wprowadź dane dostępu do wybranego dostawcy AI. Konto Strava połączysz bezpiecznie z panelu przez OAuth.</p><div class="security-note"><span>⌁</span><p>Klucze AI i tokeny OAuth są szyfrowane przed zapisem w bazie danych.</p></div></section>
   <section class="card settings-card">
     <div class="card-heading compact"><div><h2>Klucze API</h2><p>Puste pole zachowuje wcześniej zapisaną wartość.</p></div></div>
     <div class="alert alert-success" th:if="${param.saved}"><span>✓</span><p>Zapisano ustawienia.</p></div>
@@ -15,8 +15,6 @@
       <label>Klucz API wybranego dostawcy<input name="openAiKey" type="password" autocomplete="off" placeholder="Wklej klucz API"></label>
       <a id="apiKeyLink" class="api-key-link" href="#" target="_blank" rel="noopener noreferrer">Zaloguj się lub zarejestruj i utwórz klucz API <span aria-hidden="true">↗</span></a>
       <p class="form-hint">Gemini i Groq udostępniają bezpłatne plany z limitami. Zmieniając dostawcę, wklej jego klucz API.</p>
-      <label>Strava Client ID<input name="stravaClientId" autocomplete="off" placeholder="np. 12345"></label>
-      <label>Strava Client Secret<input name="stravaClientSecret" type="password" autocomplete="off" placeholder="Wklej Client Secret"></label>
       <button class="button button-primary" type="submit">Zapisz ustawienia <span>→</span></button>
     </form>
     <p class="form-hint">Po zmianie <code>APP_CRYPTO_KEY</code> wpisz i zapisz wszystkie wartości ponownie.</p>

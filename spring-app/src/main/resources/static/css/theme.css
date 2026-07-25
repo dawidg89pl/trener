@@ -58,9 +58,23 @@ html[data-theme="dark"] .status-new { background: #174537; color: #7de0bd; }
 html[data-theme="dark"] .status-muted { background: #27353d; color: #acbbc3; }
 html[data-theme="dark"] .plan-status.is-active { border-color: #307e68; background: #15362e; }
 html[data-theme="dark"] .plan-status.is-inactive { border-color: #3b4d57; background: #172229; }
+html[data-theme="dark"] .plan-help > summary { border-color: #526770; background: #111c23; color: var(--ink); }
+html[data-theme="dark"] .plan-help-panel { border-color: var(--line); background: #162129; box-shadow: 0 14px 36px rgba(0,0,0,.38); }
+html[data-theme="dark"] .plan-help-panel p { color: #b9c7cd; }
+html[data-theme="dark"] .plan-help-panel b { color: var(--ink); }
 html[data-theme="dark"] .plan-status button, html[data-theme="dark"] .delete-button { border-color: #8e4f53; background: #291b1d; color: #ff9b9b; }
-html[data-theme="dark"] .calendar-promo-icon { background: #153a35; }
 html[data-theme="dark"] .recent-events-card .card-heading, html[data-theme="dark"] .events-more, html[data-theme="dark"] .event-timeline-older { border-color: var(--line); }
+html[data-theme="dark"] .week-calendar-header, html[data-theme="dark"] .week-calendar-legend { border-color: var(--line); background: var(--paper); }
+html[data-theme="dark"] .week-calendar-nav a { border-color: var(--line); background: #111c23; color: var(--ink); }
+html[data-theme="dark"] .week-calendar-grid { background: var(--line); }
+html[data-theme="dark"] .week-day { background: #162129; }
+html[data-theme="dark"] .week-day > header { border-color: var(--line); background: #111c23; }
+html[data-theme="dark"] .week-day.is-today > header { background: #235b64; }
+html[data-theme="dark"] .week-item-strava { border-color: #8b4e34; background: #3b261e; }
+html[data-theme="dark"] .week-item-ai { border-color: #347f73; background: #173832; }
+html[data-theme="dark"] .week-item strong { color: var(--ink); }
+html[data-theme="dark"] .week-item small { color: #b8c5cb; }
+html[data-theme="dark"] .week-item-actions a { background: #101c20; color: #79dacb; }
 
 html[data-theme="dark"] .calendar-header { border-color: var(--line); background: var(--paper); }
 html[data-theme="dark"] .month-button { border-color: var(--line); background: #111c23; color: var(--ink); }

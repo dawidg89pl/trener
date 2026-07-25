@@ -6,6 +6,8 @@
 }
 
 .plan-status {
+  position: relative;
+  scroll-margin-top: 18px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -25,9 +27,151 @@
 .plan-status small { margin-bottom: 3px; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .12em; }
 .plan-status strong { color: var(--navy); font-size: 14px; }
 .plan-status p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+.plan-help { flex: 0 0 auto; }
+.plan-help > summary {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #a8bac3;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .72);
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+  list-style: none;
+}
+.plan-help > summary::-webkit-details-marker { display: none; }
+.plan-help > summary:hover,
+.plan-help[open] > summary { border-color: var(--teal); color: var(--teal-dark); }
+.plan-help > summary:focus-visible { outline: 3px solid rgba(20, 153, 134, .22); outline-offset: 2px; }
+.plan-help-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% - 6px);
+  right: 18px;
+  width: min(390px, calc(100% - 36px));
+  padding: 17px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(16, 47, 68, .18);
+}
+.plan-help-panel > strong { color: var(--navy); font-size: 13px; }
+.plan-help-panel p { margin: 9px 0 0; color: #53666f; font-size: 10px; line-height: 1.55; }
+.plan-help-panel b { color: var(--navy); }
 .plan-status form { margin: 0; }
 .plan-status button { padding: 9px 12px; border: 1px solid #d38e8e; border-radius: 7px; background: #fff; color: var(--danger); font: 800 10px inherit; cursor: pointer; }
 .plan-status button:hover { background: #fbeaea; }
+
+.week-calendar {
+  margin-bottom: 24px;
+  overflow: hidden;
+  scroll-margin-top: 18px;
+}
+
+.week-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.week-calendar-header h2 { margin: 5px 0 5px; color: var(--navy); font-size: 20px; }
+.week-calendar-header p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: 11px; }
+.week-calendar-nav { display: flex; align-items: center; gap: 10px; }
+.week-calendar-nav strong { min-width: 190px; color: var(--navy); font-size: 12px; text-align: center; }
+.week-calendar-nav a {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f4f7f8;
+  color: var(--navy);
+  font-weight: 850;
+  text-decoration: none;
+}
+.week-calendar-nav a:hover { border-color: var(--teal); color: var(--teal); }
+.week-calendar-legend { display: flex; gap: 20px; padding: 10px 24px; border-bottom: 1px solid var(--line); background: #f8fafb; }
+.week-calendar-legend span { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; font-weight: 750; }
+.week-calendar-legend i { width: 9px; height: 9px; border-radius: 3px; }
+.legend-strava i { background: #fc4c02; }
+.legend-ai i { background: var(--teal); }
+.week-calendar-scroll { overflow-x: auto; }
+.week-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 980px;
+  gap: 1px;
+  background: var(--line);
+}
+.week-day { min-width: 0; min-height: 190px; background: #fff; }
+.week-day > header { display: flex; align-items: center; justify-content: space-between; padding: 10px 11px; border-bottom: 1px solid #edf1f2; background: #f7f9fa; }
+.week-day > header span { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; }
+.week-day > header time { color: var(--navy); font-size: 10px; font-weight: 800; }
+.week-day.is-today > header { background: var(--navy); }
+.week-day.is-today > header span, .week-day.is-today > header time { color: #fff; }
+.week-day-items { display: grid; align-content: start; gap: 7px; padding: 8px; }
+.week-item { min-width: 0; padding: 9px; border: 1px solid; border-radius: 8px; }
+.week-item-strava { border-color: #f4b79d; background: #fff0ea; }
+.week-item-ai { border-color: #9bcfc5; background: #e4f3f0; }
+.week-item-type, .week-item strong, .week-item small { display: block; }
+.week-item-type { margin-bottom: 5px; font-size: 7px; font-weight: 900; letter-spacing: .06em; }
+.week-item-strava .week-item-type { color: #bf3d06; }
+.week-item-ai .week-item-type { color: var(--teal-dark); }
+.week-item strong { overflow: hidden; color: var(--navy); font-size: 10px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.week-item small { margin-top: 4px; color: #586a73; font-size: 8px; line-height: 1.35; }
+.week-item-actions { display: flex; align-items: center; gap: 5px; margin-top: 7px; }
+.week-item-actions a { padding: 3px 6px; border-radius: 4px; background: #fff; color: var(--teal-dark); font-size: 7px; font-weight: 850; text-decoration: none; }
+.week-item-actions .workout-info-button { width: 20px; height: 20px; flex-basis: 20px; font-size: 10px; }
+.week-day-empty { margin: 12px 4px; color: #9aa6ac; font-size: 9px; text-align: center; }
+
+.workout-info-button { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; padding: 0; border: 1px solid #77b9ae; border-radius: 50%; background: #fff; color: var(--teal-dark); font: 800 12px Georgia, serif; cursor: pointer; }
+.workout-info-button:hover { border-color: var(--teal); background: var(--teal); color: #fff; }
+.workout-dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; overflow: hidden; border: 0; border-radius: 16px; background: #fff; box-shadow: 0 28px 90px rgba(8,31,43,.32); color: var(--ink); }
+.workout-dialog::backdrop { background: rgba(8,27,38,.68); backdrop-filter: blur(3px); }
+.workout-dialog-panel { display: flex; max-height: calc(100vh - 32px); flex-direction: column; }
+.workout-dialog-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 23px 25px 18px; border-bottom: 1px solid var(--line); background: #f3f7f9; }
+.workout-dialog-panel > header span { color: var(--teal-dark); font-size: 10px; font-weight: 800; }
+.workout-dialog-panel > header h2 { margin: 6px 0 0; color: var(--navy); font-size: 22px; line-height: 1.2; }
+.dialog-close { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #425661; font: 400 24px/1 inherit; cursor: pointer; }
+.dialog-close:hover { border-color: var(--teal); color: var(--teal); }
+.workout-dialog-body { padding: 22px 25px; overflow-y: auto; }
+.dialog-description { margin: 0 0 22px; color: #344b57; font-size: 13px; line-height: 1.65; white-space: pre-line; }
+.workout-profile-section { margin: 0 0 25px; }
+.profile-title, .zones-title { display: block; margin-bottom: 11px; color: var(--navy); font-size: 12px; }
+.workout-profile-chart { display: flex; align-items: stretch; width: 100%; height: 112px; overflow: hidden; border-bottom: 1px solid #9eabb4; background: linear-gradient(to top,rgba(93,111,122,.08) 1px,transparent 1px) 0 0/100% 28px; }
+.profile-segment { min-width: 2px; height: 100%; margin-right: 1px; background: #aeb8c8; clip-path: polygon(0 calc(100% - var(--profile-start)),100% calc(100% - var(--profile-end)),100% 100%,0 100%); }
+.profile-segment:nth-child(even) { background: #9eaabc; }
+.workout-step-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; margin: 13px 0 0; padding: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: var(--line); list-style: none; }
+.workout-step-list li { display: flex; min-width: 0; gap: 10px; padding: 11px; background: #f7f9fa; }
+.step-number { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; background: #dce9e6; color: var(--teal-dark); font-size: 9px; font-weight: 850; }
+.workout-step-list li > div { min-width: 0; }
+.workout-step-list strong, .workout-step-list p, .workout-step-list small { display: block; }
+.workout-step-list strong { color: var(--navy); font-size: 10px; }
+.workout-step-list p { margin: 4px 0 2px; color: #3e5360; font-size: 9px; }
+.workout-step-list small { color: var(--muted); font-size: 8px; }
+.calendar-zones { display: grid; gap: 7px; }
+.calendar-zone { display: grid; grid-template-columns: 25px minmax(80px,1fr) 52px; align-items: center; gap: 9px; }
+.calendar-zone > span, .calendar-zone > small { color: #51646f; font-size: 10px; font-weight: 750; }
+.calendar-zone > small { text-align: right; }
+.calendar-zone > div { height: 9px; overflow: hidden; border-radius: 5px; background: #e5ebee; }
+.calendar-zone i { display: block; height: 100%; border-radius: inherit; background: var(--teal); }
+.calendar-zone i.zone-1 { background: #759eaa; }.calendar-zone i.zone-2 { background: #3c9d7f; }.calendar-zone i.zone-3 { background: #75a83d; }.calendar-zone i.zone-4 { background: #d4a62c; }.calendar-zone i.zone-5 { background: #df7730; }.calendar-zone i.zone-6 { background: #ca4d43; }.calendar-zone i.zone-7 { background: #994174; }
+.calendar-workout-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 25px; border-top: 1px solid var(--line); background: #f7f9fa; }
+.calendar-workout-actions form { margin: 0; }
+.dialog-download, .dialog-delete { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 9px 14px; border-radius: 7px; font-size: 11px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.dialog-download { border: 0; background: var(--teal); color: #fff; }
+.dialog-download:hover { background: var(--teal-dark); }
+.dialog-download-fit { background: #27556e; }
+.dialog-download-fit:hover { background: #1d4358; }
+.dialog-delete { border: 1px solid #e1abab; background: #fff; color: var(--danger); }
+.dialog-delete:hover { background: #fbeaea; }
 
 .dashboard-grid .workouts-card {
   margin-top: 0;
@@ -249,6 +393,7 @@
 .loading-wheel {
   display: block;
   width: 126px;
+  aspect-ratio: 1;
   max-width: 55%;
   margin: 0 auto 18px;
   overflow: visible;
@@ -258,10 +403,16 @@
   stroke-linejoin: round;
 }
 
+.loading-wheel-shadow {
+  stroke: rgba(20, 153, 134, .14);
+  stroke-width: 4;
+}
+
 .loading-wheel-spinner {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: loading-wheel-spin 0.85s linear infinite;
+  transform-box: view-box;
+  transform-origin: 70px 70px;
+  will-change: transform;
+  animation: loading-wheel-spin 1.15s linear infinite;
 }
 
 .loading-wheel-tire {
@@ -273,9 +424,21 @@
   stroke-width: 2;
 }
 
+.loading-wheel-valve {
+  stroke: var(--teal);
+  stroke-width: 3;
+}
+
+.loading-wheel-marker {
+  fill: var(--teal);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
 .loading-wheel-hub {
   fill: currentColor;
-  stroke: none;
+  stroke: #fff;
+  stroke-width: 2;
 }
 
 .loading-title {
@@ -320,20 +483,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loading-wheel-spinner,
-  .loading-dots i {
-    animation-duration: 2.5s;
-  }
+  .loading-wheel-spinner { animation-duration: 3s; }
+  .loading-dots i { animation-duration: 2.5s; }
 }
 
 .dashboard-grid .generator-card:only-child {
   grid-column: 1 / -1;
+  scroll-margin-top: 18px;
 }
 
 .analysis-toolbar {
   display: grid;
-  grid-template-columns: minmax(105px, 0.65fr) minmax(145px, 0.85fr) minmax(230px, 1.8fr);
-  align-items: end;
+  grid-template-columns: minmax(210px, 1.1fr) minmax(145px, .75fr) minmax(165px, .8fr) minmax(230px, 1.7fr);
+  align-items: start;
   gap: 16px;
   padding: 16px 24px;
   border-bottom: 1px solid var(--line);
@@ -345,6 +507,7 @@
 .analysis-ftp small { display: block; }
 .analysis-ftp span,
 .analysis-date > span,
+.analysis-time > span,
 .training-goal legend {
   margin-bottom: 6px;
   color: var(--muted);
@@ -353,8 +516,30 @@
 }
 .analysis-ftp strong { color: var(--teal); font-size: 17px; }
 .analysis-ftp small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.analysis-ftp-editor { display: flex; gap: 6px; }
+.analysis-ftp-editor input { min-width: 120px; padding: 9px 8px; }
+.analysis-ftp-editor button { padding: 0 10px; border: 0; border-radius: 7px; background: var(--teal); color: #fff; font: 750 10px inherit; cursor: pointer; }
+.generator-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+.generator-card.is-locked .generator-fields { opacity: .42; }
+.strava-lock-notice { padding: 20px 24px; border-bottom: 1px solid #f0c8b8; background: #fff2ed; }
+.strava-lock-notice strong { color: var(--navy); font-size: 14px; }
+.strava-lock-notice p { margin: 4px 0 12px; color: var(--muted); font-size: 11px; }
+.strava-lock-notice .button { padding: 9px 12px; font-size: 11px; }
 .analysis-date { display: grid; }
 .analysis-date input { padding: 9px 10px; }
+.analysis-time { display: grid; }
+.analysis-time-editor { position: relative; }
+.analysis-time-editor input { width: 100%; padding: 9px 53px 9px 10px; }
+.analysis-time-editor b {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: var(--muted);
+  font-size: 9px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.analysis-time small { margin-top: 3px; color: var(--muted); font-size: 8px; }
 .training-goal { min-width: 0; margin: 0; padding: 0; border: 0; }
 .training-goal-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .training-goal-options label { min-width: 0; cursor: pointer; }
@@ -762,6 +947,8 @@
 @media (max-width: 800px) {
   .plan-status { align-items: flex-start; flex-wrap: wrap; }
   .plan-status form { width: 100%; padding-left: 26px; }
+  .week-calendar-header { align-items: flex-start; flex-direction: column; }
+  .week-calendar-nav { width: 100%; justify-content: space-between; }
 
   .analysis-toolbar {
     grid-template-columns: 1fr 1fr;
@@ -831,6 +1018,9 @@
   .plan-status { margin-right: 0; margin-left: 0; }
   .plan-status form { padding-left: 0; }
   .plan-status button { width: 100%; }
+  .week-calendar { margin-right: -20px; margin-left: -20px; border-right: 0; border-left: 0; border-radius: 0; }
+  .week-calendar-header { padding-right: 18px; padding-left: 18px; }
+  .week-calendar-legend { padding-right: 18px; padding-left: 18px; }
 
   .analysis-toolbar {
     grid-template-columns: 1fr;
@@ -839,6 +1029,13 @@
 
   .training-goal { grid-column: auto; }
   .training-goal-options { grid-template-columns: 1fr; }
+  .workout-dialog-panel > header,
+  .workout-dialog-body { padding-right: 18px; padding-left: 18px; }
+  .workout-step-list { grid-template-columns: 1fr; }
+  .calendar-workout-actions { align-items: stretch; flex-direction: column; padding: 14px 18px; }
+  .calendar-workout-actions form,
+  .dialog-download,
+  .dialog-delete { width: 100%; }
 
   .dashboard-grid .activity-row .metric:nth-of-type(5) {
     display: block;

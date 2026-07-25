@@ -1,15 +1,1 @@
-/analyzed_history.json
-/app.py
-/app.spec
-/app_config.json
-/build
-/dist
-/fastapi_app.py
-/history_summary.json
-/requirements-web.txt
-/rozmowa-wdrozenie-vps.txt
-/static
-/strava_tokens.json
-/target
-/templates
-/__pycache__
+/spring-app/target/

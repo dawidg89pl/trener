@@ -11,6 +11,8 @@
 
   document.querySelectorAll("form[data-loading-message]").forEach((form) => {
     form.addEventListener("submit", (event) => {
+      if (event.submitter?.hasAttribute("data-skip-loading")) return;
+
       event.preventDefault();
       message.textContent = form.dataset.loadingMessage;
       overlay.classList.add("is-visible");

@@ -1,12 +1,14 @@
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\config\InitialUserConfig.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\config\SecurityConfig.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\Activity.java
+C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\AiPrompt.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\AppUser.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\GeneratedWorkout.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\StravaToken.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\UserEvent.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\model\UserSettings.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\ActivityRepository.java
+C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\AiPromptRepository.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\AppUserRepository.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\GeneratedWorkoutRepository.java
 C:\Users\goore\Downloads\trener\spring-app\src\main\java\pl\trenerai\repository\StravaTokenRepository.java
