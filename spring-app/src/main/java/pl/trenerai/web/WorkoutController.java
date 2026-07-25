@@ -1,5 +1,6 @@
 package pl.trenerai.web;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pl.trenerai.repository.GeneratedWorkoutRepository;
+import pl.trenerai.repository.StravaTokenRepository;
 import pl.trenerai.service.*;
 
 @Controller
@@ -18,34 +20,43 @@ public class WorkoutController {
     private final GeneratedWorkoutRepository workouts;
     private final UserEventService eventLog;
     private final FitWorkoutService fitWorkoutService;
+    private final StravaTokenRepository stravaTokens;
 
     public WorkoutController(WorkoutGenerationService generator, CurrentUserService current,
             GeneratedWorkoutRepository workouts, UserEventService eventLog,
-            FitWorkoutService fitWorkoutService) {
+            FitWorkoutService fitWorkoutService, StravaTokenRepository stravaTokens) {
         this.generator = generator;
         this.current = current;
         this.workouts = workouts;
         this.eventLog = eventLog;
         this.fitWorkoutService = fitWorkoutService;
+        this.stravaTokens = stravaTokens;
     }
 
     @PostMapping("/workouts/generate")
     String generate(@RequestParam(required = false) List<Long> activityIds, @RequestParam LocalDate startDate,
-            @RequestParam String trainingGoal,
+            @RequestParam String trainingGoal, @RequestParam BigDecimal weeklyTrainingHours,
             RedirectAttributes redirect) {
+        if (stravaTokens.findById(current.get().getId())
+                .map(token -> token.getStravaAthleteId() == null)
+                .orElse(true)) {
+            redirect.addFlashAttribute("error", "Najpierw połącz konto Strava.");
+            return "redirect:/#generator";
+        }
         if (activityIds == null || activityIds.isEmpty()) {
             redirect.addFlashAttribute("error", "Zaznacz co najmniej jedną aktywność przed wygenerowaniem treningów.");
-            return "redirect:/";
+            return "redirect:/#generator";
         }
         try {
             int count = generator.generate(activityIds, startDate,
-                    WorkoutGenerationService.TrainingGoal.fromId(trainingGoal));
+                    WorkoutGenerationService.TrainingGoal.fromId(trainingGoal), weeklyTrainingHours);
             redirect.addFlashAttribute("message", "Twój 7-dniowy plan jest aktywny. AI zaplanowało " + count + " treningów, a pozostałe dni przeznaczyło na regenerację.");
+            return "redirect:/?week=" + startDate + "#calendar";
         } catch (Exception error) {
             redirect.addFlashAttribute("error",
                     error.getMessage() == null ? "Nie udało się wygenerować treningów." : error.getMessage());
+            return "redirect:/#generator";
         }
-        return "redirect:/";
     }
 
     @GetMapping("/workouts/{id}/download")
@@ -82,10 +93,9 @@ public class WorkoutController {
         eventLog.record(current.get(), "WORKOUT_DELETED", "Usunięto trening „" + workout.getName() + "”");
         redirect.addFlashAttribute("message", "Trening został usunięty z listy.");
         if ("/calendar".equals(returnTo)) {
-            return returnMonth != null && returnMonth.matches("\\d{4}-\\d{2}")
-                    ? "redirect:/calendar?month=" + returnMonth : "redirect:/calendar";
+            return "redirect:/#calendar";
         }
-        return "redirect:/";
+        return "redirect:/#plan-status";
     }
 
     @PostMapping("/workouts/plan/cancel")

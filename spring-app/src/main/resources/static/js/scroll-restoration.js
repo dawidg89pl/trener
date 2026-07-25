@@ -1,5 +1,14 @@
 (() => {
-  const storageKey = "trener-ai:scroll-after-post";
+  const targetKey = "trener-ai:section-after-navigation";
+
+  const saveTarget = (target) => {
+    if (target) sessionStorage.setItem(targetKey, target);
+  };
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[data-scroll-target]");
+    if (link) saveTarget(link.dataset.scrollTarget);
+  }, true);
 
   document.addEventListener("submit", (event) => {
     const form = event.target;
@@ -7,32 +16,27 @@
 
     const action = new URL(form.action, window.location.href);
     if (action.pathname === "/logout") {
-      sessionStorage.removeItem(storageKey);
+      sessionStorage.removeItem(targetKey);
       return;
     }
 
-    sessionStorage.setItem(storageKey, JSON.stringify({
-      x: window.scrollX,
-      y: window.scrollY,
-      savedAt: Date.now()
-    }));
+    const submitterTarget = event.submitter?.dataset.scrollTarget;
+    saveTarget(submitterTarget || form.dataset.scrollTarget);
   }, true);
 
-  const savedValue = sessionStorage.getItem(storageKey);
-  if (!savedValue) return;
+  const hashTarget = decodeURIComponent(window.location.hash.slice(1));
+  const savedTarget = sessionStorage.getItem(targetKey);
+  sessionStorage.removeItem(targetKey);
+  const targetId = hashTarget || savedTarget;
+  if (!targetId) return;
 
-  // Pozycja dotyczy tylko pierwszej strony otwartej po wysłaniu formularza.
-  sessionStorage.removeItem(storageKey);
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
-  try {
-    const saved = JSON.parse(savedValue);
-    if (Date.now() - saved.savedAt > 120000) return;
+  const restoreSection = () => {
+    const target = document.getElementById(targetId);
+    if (target) target.scrollIntoView({ block: "start" });
+  };
 
-    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      window.scrollTo(saved.x, saved.y);
-    }));
-  } catch {
-    // Uszkodzony wpis w sessionStorage nie powinien blokować działania strony.
-  }
+  requestAnimationFrame(() => requestAnimationFrame(restoreSection));
+  window.addEventListener("load", restoreSection, { once: true });
 })();

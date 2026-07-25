@@ -4,7 +4,7 @@ Wieloużytkownikowa wersja aplikacji. Każdy użytkownik ma własne konto, ustaw
 
 ## Konfiguracja
 
-W pliku `src/main/resources/application.yml` podaj dane PostgreSQL lub ustaw zmienne `DB_URL`, `DB_USERNAME` i `DB_PASSWORD`. Przed wdrożeniem ustaw także długi losowy `APP_CRYPTO_KEY` oraz `APP_PUBLIC_URL` (np. `https://trener.example.pl`).
+W pliku `src/main/resources/application.yml` podaj dane PostgreSQL lub ustaw zmienne `DB_URL`, `DB_USERNAME` i `DB_PASSWORD`. Przed wdrożeniem ustaw także długi losowy `APP_CRYPTO_KEY`, `APP_PUBLIC_URL` (np. `https://trener.example.pl`) oraz centralne dane aplikacji Strava: `STRAVA_CLIENT_ID` i `STRAVA_CLIENT_SECRET`.
 
 Przy pierwszym uruchomieniu tworzony jest użytkownik startowy `dawid` z hasłem ustawionym w `app.seed-user.password`. Po zalogowaniu zmień to hasło albo ustaw `SEED_USER_ENABLED=false`.
 
@@ -15,4 +15,6 @@ mvn spring-boot:run
 
 If the existing database reports `Large Objects may not be used in auto-commit mode`, run [db/migrate-lobs-to-text.sql](db/migrate-lobs-to-text.sql) once. New installations do not need it.
 
-Aplikacja będzie dostępna na porcie 8080. W Strava ustaw **Authorization Callback Domain** na domenę aplikacji (bez protokołu i bez ścieżki), np. `trener.example.pl`. W `APP_PUBLIC_URL` ustaw pełny, publiczny adres tej samej aplikacji, np. `https://trener.example.pl`. Podczas pracy lokalnej oba adresy to odpowiednio `localhost` oraz `http://localhost:8080`.
+Aplikacja będzie dostępna na porcie 8080. Administrator tworzy jedną aplikację w Strava i zapisuje jej dane w `STRAVA_CLIENT_ID` oraz `STRAVA_CLIENT_SECRET`. Użytkownicy nie wpisują własnych kluczy — łączą konta przyciskiem OAuth w panelu.
+
+W Strava ustaw **Authorization Callback Domain** na domenę aplikacji (bez protokołu i bez ścieżki), np. `trener.example.pl`. Callback OAuth ma adres `${APP_PUBLIC_URL}/strava/callback`. W `APP_PUBLIC_URL` ustaw pełny publiczny adres aplikacji, np. `https://trener.example.pl`. Podczas pracy lokalnej oba adresy to odpowiednio `localhost` oraz `http://localhost:8080`.
