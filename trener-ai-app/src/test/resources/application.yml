@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+  flyway:
+    enabled: false
+  thymeleaf:
+    cache: false
+server:
+  port: 0
+app:
+  public-url: http://localhost
+  crypto-key: test-secret-key-at-least-32-characters-long
+  strava:
+    client-id: test-id
+    client-secret: test-secret

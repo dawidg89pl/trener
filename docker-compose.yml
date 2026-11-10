@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: trener-ai-db
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trener}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: ./trener-ai-app
+    container_name: trener-ai-app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT:-20190}:20190"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
