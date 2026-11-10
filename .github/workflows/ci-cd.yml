@@ -41,6 +41,9 @@ jobs:
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_SSH_PORT }}
           script: |
+            if [ ! -d ~/trener ]; then
+              git clone https://github.com/dawidg89pl/trener.git ~/trener
+            fi
             cd ~/trener
             git pull origin main
             docker compose up -d --build --remove-orphans
