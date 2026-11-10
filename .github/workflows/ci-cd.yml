@@ -27,9 +27,33 @@ jobs:
       - name: Run tests
         run: mvn -B verify
 
-  deploy:
+  build-and-push:
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: trener-ai-app
+          push: true
+          tags: ghcr.io/dawidg89pl/trener-ai:latest
+
+  deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
@@ -46,5 +70,6 @@ jobs:
             fi
             cd ~/trener
             git pull origin main
-            docker compose up -d --build --remove-orphans
+            docker compose pull app
+            docker compose up -d --remove-orphans
             docker image prune -f
