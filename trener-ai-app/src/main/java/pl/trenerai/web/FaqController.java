@@ -9,4 +9,5 @@ public class FaqController {
     String page() {
         return "faq";
     }
+
 }
