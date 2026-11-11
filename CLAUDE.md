@@ -9,21 +9,22 @@ Java 21, Spring Boot 3.4, Spring Security, Spring Data JPA, PostgreSQL 17, Flywa
 ## Struktura projektu
 
 ```
-trener-ai-app/                  # jedyny moduł aplikacji
+trener-ai-app/                    # moduł aplikacji (pom.xml, Dockerfile)
 ├── src/main/java/pl/trenerai/
-│   ├── api/                    # REST API: kontrolery, DTO, obsługa błędów
-│   ├── config/                 # Security, OpenAPI, bootstrap użytkownika
-│   ├── model/                  # encje JPA
-│   ├── repository/             # Spring Data repozytoria
-│   ├── service/                # logika biznesowa
-│   └── web/                    # kontrolery Thymeleaf (SSR)
+│   ├── api/                      # REST API: kontrolery, DTO, obsługa błędów
+│   ├── config/                   # Security, OpenAPI, bootstrap użytkownika
+│   ├── model/                    # encje JPA
+│   ├── repository/               # Spring Data repozytoria
+│   ├── service/                  # logika biznesowa
+│   └── web/                      # kontrolery Thymeleaf (SSR)
 ├── src/main/resources/
-│   ├── db/migration/           # migracje Flyway (V{N}__opis.sql)
-│   ├── templates/              # szablony Thymeleaf
-│   └── static/                 # CSS, JS, favicon
-└── src/test/                   # testy (JUnit 5, MockMvc, H2)
-docker-compose.yml              # stack: app + PostgreSQL
-.github/workflows/ci-cd.yml     # test → build GHCR → deploy SSH
+│   ├── db/migration/             # migracje Flyway (V{N}__opis.sql)
+│   ├── templates/                # szablony Thymeleaf
+│   └── static/                   # CSS, JS, favicon
+└── src/test/                     # testy (JUnit 5, MockMvc, H2)
+docker-compose.yml                # stack: app + PostgreSQL
+.github/workflows/ci-cd.yml      # test → build GHCR → deploy SSH
+.claude/                          # hooki i skille
 ```
 
 ## Komendy
@@ -79,6 +80,19 @@ Projekt celowo ma mało zależności. Garmin FIT SDK jest jedyną niestandardow�
 - **Eventy użytkownika**: operacje logowane przez `UserEventService.record()` z typem (`STRAVA_SYNC`, `WORKOUTS_GENERATED` itp.). Timeline widoczny na dashboardzie.
 - **Soft delete**: treningi oznaczane jako `deleted = true`, nie usuwane fizycznie z bazy.
 - **Autoryzacja**: `CurrentUserService.get()` zwraca zalogowanego użytkownika. Każde query do bazy filtruje po `userId` — nie polegaj na samym Spring Security.
+
+## Hooki (`.claude/settings.json`)
+
+- **PreToolUse / Bash** — blokuje destrukcyjne operacje git (`push --force`, `reset --hard`, `clean -f`, `branch -D main`).
+- **PreToolUse / Edit|Write** — blokuje edycję plików z sekretami (`.env`, `credentials`, klucze SSH).
+- **PostToolUse / Edit|Write** — po edycji pliku `.java` automatycznie uruchamia `mvn compile` (self-healing loop: jeśli kompilacja się nie powiedzie, agent widzi błędy i poprawia kod).
+- **Stop** — przed zakończeniem pracy sprawdza kompilację i wyświetla `git diff --stat`.
+
+## Skille (`.claude/skills/`)
+
+- `/verify` — pełna weryfikacja projektu: kompilacja → testy → diff → skan sekretów. Uruchom przed commitem.
+- `/migration <opis>` — tworzy nową migrację Flyway z kolejnym numerem wersji, zgodną z konwencjami PostgreSQL projektu.
+- `/status` — szybki przegląd stanu projektu: git, build, Docker, wersja.
 
 ## CI/CD
 
