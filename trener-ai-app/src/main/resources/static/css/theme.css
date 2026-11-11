@@ -49,11 +49,13 @@ html[data-theme="dark"] .app-footer { border-top-color: var(--line); background:
 html[data-theme="dark"] .analysis-toolbar, html[data-theme="dark"] .weekly-summary, html[data-theme="dark"] .weekly-summary-heading, html[data-theme="dark"] .generator-footer { border-color: var(--line); background: #111c23; }
 html[data-theme="dark"] .training-goal-options span { border-color: #4a5d68; background: #101a20; color: #aebcc4; }
 html[data-theme="dark"] .training-goal-options input:checked + span { border-color: var(--teal); background: #173a35; color: #79dacb; }
-html[data-theme="dark"] .activity-item, html[data-theme="dark"] .older-activities, html[data-theme="dark"] .older-activities-list { border-color: var(--line); }
+html[data-theme="dark"] .activity-item, html[data-theme="dark"] .activity-pagination { border-color: var(--line); }
 html[data-theme="dark"] .activity-row:hover { background: #182b31; }
 html[data-theme="dark"] .activity-detail-grid { border-color: #354650; background: #354650; }
 html[data-theme="dark"] .activity-detail-grid > div { background: #111c23; }
-html[data-theme="dark"] .older-activities > summary { background: #17272d; color: var(--teal); }
+html[data-theme="dark"] .page-size-option:hover { background: #17272d; }
+html[data-theme="dark"] .page-size-option.active { background: var(--teal); color: #fff; }
+html[data-theme="dark"] .pagination-link:hover:not(.disabled) { background: #17272d; }
 html[data-theme="dark"] .status-new { background: #174537; color: #7de0bd; }
 html[data-theme="dark"] .status-muted { background: #27353d; color: #acbbc3; }
 html[data-theme="dark"] .plan-status.is-active { border-color: #307e68; background: #15362e; }
@@ -63,7 +65,7 @@ html[data-theme="dark"] .plan-help-panel { border-color: var(--line); background
 html[data-theme="dark"] .plan-help-panel p { color: #b9c7cd; }
 html[data-theme="dark"] .plan-help-panel b { color: var(--ink); }
 html[data-theme="dark"] .plan-status button, html[data-theme="dark"] .delete-button { border-color: #8e4f53; background: #291b1d; color: #ff9b9b; }
-html[data-theme="dark"] .recent-events-card .card-heading, html[data-theme="dark"] .events-more, html[data-theme="dark"] .event-timeline-older { border-color: var(--line); }
+html[data-theme="dark"] .recent-events-card .card-heading { border-color: var(--line); }
 html[data-theme="dark"] .week-calendar-header, html[data-theme="dark"] .week-calendar-legend { border-color: var(--line); background: var(--paper); }
 html[data-theme="dark"] .week-calendar-nav a { border-color: var(--line); background: #111c23; color: var(--ink); }
 html[data-theme="dark"] .week-calendar-grid { background: var(--line); }

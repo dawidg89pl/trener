@@ -19,6 +19,8 @@ services:
     container_name: trener-ai-app
     restart: unless-stopped
     env_file: .env
+    environment:
+      - APP_DEMO=${APP_DEMO:-false}
     ports:
       - "${APP_PORT:-20190}:20190"
     depends_on:

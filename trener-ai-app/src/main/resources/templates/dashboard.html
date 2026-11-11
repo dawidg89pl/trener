@@ -107,15 +107,25 @@
         <div><span>Czas</span><strong th:text="${weeklySummary.duration}">0 h 0 min</strong></div>
         <div><span>Przewyższenie</span><strong th:text="|${#numbers.formatDecimal(weeklySummary.elevationM, 1, 0)} m|">0 m</strong></div>
       </section>
-      <div class="activity-list" th:if="${!#lists.isEmpty(activities)}">
-        <div class="activity-select-all">
-          <label><input type="checkbox" id="select-all-activities"><span>Zaznacz wszystko</span></label>
+      <div class="activity-list" th:if="${!#lists.isEmpty(activities)}" th:attr="data-all-ids=${#strings.listJoin(allActivityIds, ',')}">
+        <div id="off-page-selections"></div>
+        <div class="activity-list-toolbar">
+          <div class="activity-select-all">
+            <label><input type="checkbox" id="select-all-activities"><span>Zaznacz wszystko</span></label>
+          </div>
+          <div class="page-size-selector">
+            <span>Pokaż:</span>
+            <th:block th:each="opt : ${pageSizeOptions}">
+              <a th:href="@{/(size=${opt})} + '#generator'" th:text="${opt}" th:classappend="${opt == pageSize ? ' active' : ''}" class="page-size-option">10</a>
+            </th:block>
+          </div>
         </div>
-        <th:block th:each="item, itemStatus : ${activities}" th:if="${itemStatus.index < 10}"><div th:replace="~{fragments/activity-item :: item(item=${item})}"></div></th:block>
-        <details class="older-activities" th:if="${#lists.size(activities) > 10}">
-          <summary><span th:text="|Pokaż pozostałe aktywności (${#lists.size(activities) - 10})|">Pokaż pozostałe aktywności</span><span class="older-activities-chevron" aria-hidden="true"></span></summary>
-          <div class="older-activities-list"><th:block th:each="item, itemStatus : ${activities}" th:if="${itemStatus.index >= 10}"><div th:replace="~{fragments/activity-item :: item(item=${item})}"></div></th:block></div>
-        </details>
+        <th:block th:each="item : ${activities}"><div th:replace="~{fragments/activity-item :: item(item=${item})}"></div></th:block>
+        <nav class="activity-pagination" th:if="${activityPage.totalPages > 1}" aria-label="Stronicowanie aktywności">
+          <a th:href="@{/(page=${currentPage - 1}, size=${pageSize})} + '#generator'" th:classappend="${currentPage == 0 ? ' disabled' : ''}" class="pagination-link">&laquo; Poprzednia</a>
+          <span class="pagination-info" th:text="|Strona ${currentPage + 1} z ${activityPage.totalPages}|">Strona 1 z 5</span>
+          <a th:href="@{/(page=${currentPage + 1}, size=${pageSize})} + '#generator'" th:classappend="${currentPage + 1 >= activityPage.totalPages ? ' disabled' : ''}" class="pagination-link">Następna &raquo;</a>
+        </nav>
       </div>
       <div class="empty-inline" th:if="${#lists.isEmpty(activities)}"><span>↗</span><div><strong>Brak aktywności</strong><p>Połącz konto Strava, a następnie pobierz ostatnie jazdy.</p></div></div>
       <div class="generator-footer"><p th:text="${planActive ? 'Najpierw anuluj aktywny plan, aby utworzyć nowy.' : 'AI zaplanuje 7 dni i dobierze liczbę treningów do aktualnego obciążenia.'}">Powstanie plan na siedem dni.</p><button class="button button-generate" type="submit" th:disabled="${#lists.isEmpty(activities) || planActive}">Generuj plan na 7 dni <span>✦</span></button></div>
@@ -125,9 +135,17 @@
     </div>
 
     <section class="card recent-events-card">
-      <div class="card-heading compact"><div><p class="eyebrow">OSTATNIA AKTYWNOŚĆ</p><h2>Co ostatnio się działo</h2><p>Najnowsze operacje wykonane na Twoim koncie.</p></div></div>
-      <ol class="event-timeline" th:if="${!#lists.isEmpty(recentEvents)}">
-        <li class="event-item" th:each="event, eventStatus : ${recentEvents}" th:if="${eventStatus.index < 5}" th:classappend="| event-${event.type.toLowerCase()}|">
+      <div class="card-heading compact">
+        <div><p class="eyebrow">OSTATNIA AKTYWNOŚĆ</p><h2>Co ostatnio się działo</h2><p>Najnowsze operacje wykonane na Twoim koncie.</p></div>
+        <div class="page-size-selector" th:if="${!#lists.isEmpty(recentEvents)}">
+          <span>Pokaż:</span>
+          <th:block th:each="opt : ${pageSizeOptions}">
+            <a th:href="@{/(evSize=${opt})} + '#events'" th:text="${opt}" th:classappend="${opt == evSize ? ' active' : ''}" class="page-size-option">10</a>
+          </th:block>
+        </div>
+      </div>
+      <ol class="event-timeline" id="events" th:if="${!#lists.isEmpty(recentEvents)}">
+        <li class="event-item" th:each="event : ${recentEvents}" th:classappend="| event-${event.type.toLowerCase()}|">
           <span class="event-dot" aria-hidden="true"></span>
           <div class="event-content">
             <strong th:text="${event.description}">Zsynchronizowano ze Stravą</strong>
@@ -135,18 +153,11 @@
           </div>
         </li>
       </ol>
-      <details class="events-more" th:if="${#lists.size(recentEvents) > 5}">
-        <summary><span>Pokaż starsze aktywności</span><span class="events-more-chevron" aria-hidden="true"></span></summary>
-        <ol class="event-timeline event-timeline-older">
-          <li class="event-item" th:each="event, eventStatus : ${recentEvents}" th:if="${eventStatus.index >= 5}" th:classappend="| event-${event.type.toLowerCase()}|">
-            <span class="event-dot" aria-hidden="true"></span>
-            <div class="event-content">
-              <strong th:text="${event.description}">Zsynchronizowano ze Stravą</strong>
-              <time th:datetime="${event.createdAt}" th:text="${#temporals.format(event.createdAtLocal, 'dd.MM.yyyy, HH:mm')}">17.07.2026, 14:30</time>
-            </div>
-          </li>
-        </ol>
-      </details>
+      <nav class="activity-pagination" th:if="${eventPage.totalPages > 1}" aria-label="Stronicowanie zdarzeń">
+        <a th:href="@{/(evPage=${evPage - 1}, evSize=${evSize})} + '#events'" th:classappend="${evPage == 0 ? ' disabled' : ''}" class="pagination-link">&laquo; Poprzednia</a>
+        <span class="pagination-info" th:text="|Strona ${evPage + 1} z ${eventPage.totalPages}|">Strona 1 z 5</span>
+        <a th:href="@{/(evPage=${evPage + 1}, evSize=${evSize})} + '#events'" th:classappend="${evPage + 1 >= eventPage.totalPages ? ' disabled' : ''}" class="pagination-link">Następna &raquo;</a>
+      </nav>
       <div class="empty-events" th:if="${#lists.isEmpty(recentEvents)}">Tutaj pojawią się informacje o synchronizacji i wygenerowanych treningach.</div>
     </section>
   </main>
