@@ -22,6 +22,8 @@ server:
 app:
   public-url: ${APP_PUBLIC_URL:https://trenerai.mikrus.dev}
   crypto-key: ${APP_CRYPTO_KEY:change-this-to-a-long-random-secret-at-least-32-characters}
+  demo:
+    enabled: ${APP_DEMO:false}
   strava:
     client-id: ${STRAVA_CLIENT_ID:}
     client-secret: ${STRAVA_CLIENT_SECRET:}

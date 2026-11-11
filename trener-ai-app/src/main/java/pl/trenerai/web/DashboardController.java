@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,15 +55,28 @@ public class DashboardController {
         this.workoutSummaries = workoutSummaries;
     }
 
+    private static final List<Integer> PAGE_SIZE_OPTIONS = List.of(10, 20, 50, 100);
+
     @GetMapping("/")
-    String dashboard(@RequestParam(required = false) String week, Model model) {
+    String dashboard(@RequestParam(required = false) String week,
+                     @RequestParam(defaultValue = "0") int page,
+                     @RequestParam(defaultValue = "10") int size,
+                     @RequestParam(defaultValue = "0") int evPage,
+                     @RequestParam(defaultValue = "10") int evSize,
+                     Model model) {
         var user = current.get();
         var userSettings = current.settings();
-        var activityList = activities.findByUserIdOrderByActivityDateDesc(user.getId());
+        if (!PAGE_SIZE_OPTIONS.contains(size)) {
+            size = 10;
+        }
+        if (!PAGE_SIZE_OPTIONS.contains(evSize)) {
+            evSize = 10;
+        }
+        Page<Activity> activityPage = activities.findByUserIdOrderByActivityDateDesc(
+                user.getId(), PageRequest.of(page, size));
         var weekStart = LocalDate.now().minusDays(6);
-        var weeklyActivities = activityList.stream()
-                .filter(activity -> !activity.getActivityDate().isBefore(weekStart))
-                .toList();
+        var weeklyActivities = activities.findByUserIdAndActivityDateBetween(
+                user.getId(), weekStart, LocalDate.now());
         int weeklyMinutes = weeklyActivities.stream().mapToInt(activity -> activity.getMovingTimeMin()).sum();
         var weeklySummary = new WeeklySummary(
                 weeklyActivities.size(),
@@ -71,9 +86,9 @@ public class DashboardController {
         var generatedWorkouts = workouts.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId());
         LocalDate weekStartDate = parseWeek(week);
         LocalDate weekEndDate = weekStartDate.plusDays(6);
-        Map<LocalDate, List<Activity>> activitiesByDate = activityList.stream()
-                .filter(activity -> !activity.getActivityDate().isBefore(weekStartDate)
-                        && !activity.getActivityDate().isAfter(weekEndDate))
+        var calendarActivities = activities.findByUserIdAndActivityDateBetween(
+                user.getId(), weekStartDate, weekEndDate);
+        Map<LocalDate, List<Activity>> activitiesByDate = calendarActivities.stream()
                 .collect(Collectors.groupingBy(Activity::getActivityDate));
         Map<LocalDate, List<GeneratedWorkout>> workoutsByDate = generatedWorkouts.stream()
                 .filter(workout -> !workout.getPlannedDate().isBefore(weekStartDate)
@@ -91,7 +106,14 @@ public class DashboardController {
                 .collect(Collectors.toMap(GeneratedWorkout::getId, workoutSummaries::summarize));
 
         model.addAttribute("user", user);
-        model.addAttribute("activities", activityList);
+        List<Long> allActivityIds = activities.findByUserIdOrderByActivityDateDesc(user.getId())
+                .stream().map(Activity::getId).toList();
+        model.addAttribute("activityPage", activityPage);
+        model.addAttribute("activities", activityPage.getContent());
+        model.addAttribute("allActivityIds", allActivityIds);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("pageSizeOptions", PAGE_SIZE_OPTIONS);
         model.addAttribute("weeklySummary", weeklySummary);
         model.addAttribute("stravaFtp", userSettings.getStravaFtp());
         model.addAttribute("stravaConnected", stravaTokens.findById(user.getId())
@@ -99,7 +121,12 @@ public class DashboardController {
                 .orElse(false));
         model.addAttribute("workoutCount", generatedWorkouts.size());
         model.addAttribute("planActive", !generatedWorkouts.isEmpty());
-        model.addAttribute("recentEvents", events.findByUserIdOrderByCreatedAtDesc(user.getId()));
+        var eventPage = events.findByUserIdOrderByCreatedAtDesc(
+                user.getId(), PageRequest.of(evPage, evSize));
+        model.addAttribute("recentEvents", eventPage.getContent());
+        model.addAttribute("eventPage", eventPage);
+        model.addAttribute("evPage", evPage);
+        model.addAttribute("evSize", evSize);
         model.addAttribute("defaultStartDate", LocalDate.now().plusDays(1));
         model.addAttribute("weekDays", weekDays);
         model.addAttribute("weekLabel", WEEK_LABEL.format(weekStartDate) + " – "
